@@ -1,0 +1,24 @@
+version: '3'
+services:
+  backend:
+    image: good-threads-backend
+    restart: always
+        # container_name: app_main
+        # command: sh -c "yarn install && yarn start"
+        # working_dir: /app
+    ports:
+      - 8080:3000
+    environment:
+      MYSQL_HOST: localhost
+    volumes:
+      - ./.env:/app/.env
+#   mongo:
+#     image: mongo
+#     container_name: app_mongo
+#     restart: always
+#     ports:
+#       - 27017:27017
+#     volumes:
+#       - ~/mongo:/data/db
+# volumes:
+#   mongodb:

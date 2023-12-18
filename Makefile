@@ -1,7 +1,13 @@
 .PHONY: build
 build:
+	go mod tidy
 	docker build --tag good-threads-backend .
 
 .PHONY: run
 run:
-	docker run -p 8080:3000 good-threads-backend:latest
+	docker-compose down
+	docker-compose up -d
+	docker-compose logs -f
+
+.PHONY: reset
+reset: build run
