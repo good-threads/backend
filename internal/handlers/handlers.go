@@ -11,14 +11,14 @@ type Handlers interface {
 }
 
 type handlers struct {
-	logic welcome.Logic
+	welcome welcome.Logic
 }
 
-func New(logic welcome.Logic) Handlers {
-	return &handlers{logic: logic}
+func New(welcome welcome.Logic) Handlers {
+	return &handlers{welcome: welcome}
 }
 
 func (h *handlers) Welcome(w http.ResponseWriter, r *http.Request) {
-	result := h.logic.Behavior()
+	result := h.welcome.Behavior()
 	w.Write([]byte(result))
 }
