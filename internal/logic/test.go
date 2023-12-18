@@ -10,6 +10,6 @@ func NewTest() *Test {
 	return &Test{}
 }
 
-func (h *Test) Handler() string {
+func (h *Test) Behavior() string {
 	return "welcome\n"
 }

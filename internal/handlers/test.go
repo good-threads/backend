@@ -19,5 +19,6 @@ func NewTest(l *logic.Test) *Test {
 }
 
 func (h *Test) Handler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("welcome\n"))
+	result := h.l.Behavior()
+	w.Write([]byte(result))
 }
