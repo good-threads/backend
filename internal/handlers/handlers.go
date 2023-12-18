@@ -3,22 +3,22 @@ package handlers
 import (
 	"net/http"
 
-	"github.com/good-threads/backend/internal/logic/welcome"
+	"github.com/good-threads/backend/internal/logic/common"
 )
 
 type Handlers interface {
-	Welcome(w http.ResponseWriter, r *http.Request)
+	Ping(w http.ResponseWriter, r *http.Request)
 }
 
 type handlers struct {
-	welcome welcome.Logic
+	common common.Logic
 }
 
-func New(welcome welcome.Logic) Handlers {
-	return &handlers{welcome: welcome}
+func New(common common.Logic) Handlers {
+	return &handlers{common: common}
 }
 
-func (h *handlers) Welcome(w http.ResponseWriter, r *http.Request) {
-	result := h.welcome.Behavior()
+func (h *handlers) Ping(w http.ResponseWriter, r *http.Request) {
+	result := h.common.Ping()
 	w.Write([]byte(result))
 }
