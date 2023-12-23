@@ -1,7 +1,9 @@
 package user
 
 import (
+	"github.com/good-threads/backend/internal/client/user"
 	e "github.com/good-threads/backend/internal/errors"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Logic interface {
@@ -9,11 +11,11 @@ type Logic interface {
 }
 
 type logic struct {
-	takenUsername string
+	client user.Client
 }
 
-func Setup(takenUsername string) Logic {
-	return &logic{takenUsername: takenUsername}
+func Setup(client user.Client) Logic {
+	return &logic{client: client}
 }
 
 func (l *logic) Create(username string, password string) error {
@@ -23,8 +25,9 @@ func (l *logic) Create(username string, password string) error {
 	if password == "" {
 		return &e.BadPassword{}
 	}
-	if username == l.takenUsername {
-		return &e.UsernameAlreadyTaken{}
+	bytes, err := bcrypt.GenerateFromPassword([]byte(password), 14)
+	if err != nil {
+		return err
 	}
-	return nil
+	return l.client.Persist(username, bytes)
 }

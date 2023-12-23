@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	userClient "github.com/good-threads/backend/internal/client/user"
 	"github.com/good-threads/backend/internal/config"
 	commonLogic "github.com/good-threads/backend/internal/logic/common"
 	userLogic "github.com/good-threads/backend/internal/logic/user"
@@ -22,7 +23,7 @@ func main() {
 
 	httpPresentation := httpPresentation.Setup(
 		commonLogic.Setup(),
-		userLogic.Setup(env.TakenUsername),
+		userLogic.Setup(userClient.Setup(env.TakenUsername)),
 	)
 
 	r := chi.NewRouter()
