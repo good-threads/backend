@@ -5,9 +5,9 @@ import (
 	"net/http"
 
 	"github.com/good-threads/backend/internal/config"
-	"github.com/good-threads/backend/internal/handlers"
-	"github.com/good-threads/backend/internal/logic/common"
-	"github.com/good-threads/backend/internal/logic/user"
+	commonLogic "github.com/good-threads/backend/internal/logic/common"
+	userLogic "github.com/good-threads/backend/internal/logic/user"
+	httpPresentation "github.com/good-threads/backend/internal/presentation/http"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -15,20 +15,21 @@ import (
 
 func main() {
 
-	env, err := config.Setup()
+	env, err := config.Get()
 	if err != nil {
-		log.Fatalf("unable setup config: %e", err)
+		log.Fatalf("unable get config: %e", err)
 	}
 
-	u := user.New()
-	c := common.New()
-	h := handlers.New(c, u)
+	httpPresentation := httpPresentation.Setup(
+		commonLogic.Setup(),
+		userLogic.Setup(env.TakenUsername),
+	)
 
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 
-	r.Get(env.Route, h.Ping)
-	r.Post("/user", h.CreateUser)
+	r.Get("/ping", httpPresentation.Ping)
+	r.Post("/user", httpPresentation.CreateUser)
 
 	log.Println("Listening...")
 	http.ListenAndServe(":3000", r)

@@ -6,7 +6,7 @@ type Logic interface {
 
 type logic struct{}
 
-func New() Logic {
+func Setup() Logic {
 	return &logic{}
 }
 

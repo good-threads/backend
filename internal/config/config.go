@@ -6,10 +6,10 @@ import (
 )
 
 type Config struct {
-	Route string `env:"ROUTE,required"`
+	TakenUsername string `env:"TAKEN_USERNAME,required"`
 }
 
-func Setup() (*Config, error) {
+func Get() (*Config, error) {
 	if err := godotenv.Load(); err != nil {
 		return nil, err
 	}

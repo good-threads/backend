@@ -8,10 +8,12 @@ type Logic interface {
 	Create(username string, password string) error
 }
 
-type logic struct{}
+type logic struct {
+	takenUsername string
+}
 
-func New() Logic {
-	return &logic{}
+func Setup(takenUsername string) Logic {
+	return &logic{takenUsername: takenUsername}
 }
 
 func (l *logic) Create(username string, password string) error {
@@ -21,7 +23,7 @@ func (l *logic) Create(username string, password string) error {
 	if password == "" {
 		return &e.BadPassword{}
 	}
-	if username == "tom" {
+	if username == l.takenUsername {
 		return &e.UsernameAlreadyTaken{}
 	}
 	return nil
