@@ -4,7 +4,10 @@ FROM golang:1.21
 
 WORKDIR /app 
 
-COPY . .
+COPY go.mod go.sum main.go ./
+COPY internal ./internal
+
+RUN ls
 
 RUN go mod download            
 

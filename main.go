@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 
@@ -9,6 +10,8 @@ import (
 	commonLogic "github.com/good-threads/backend/internal/logic/common"
 	userLogic "github.com/good-threads/backend/internal/logic/user"
 	httpPresentation "github.com/good-threads/backend/internal/presentation/http"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -21,9 +24,16 @@ func main() {
 		log.Fatalf("unable get config: %e", err)
 	}
 
+	mongoClient, err := mongo.Connect(context.TODO(), options.Client().ApplyURI(env.MongoDBURI))
+	if err != nil {
+		log.Fatalf("unable connect to mongo: %e", err)
+	}
+
 	httpPresentation := httpPresentation.Setup(
 		commonLogic.Setup(),
-		userLogic.Setup(userClient.Setup(env.TakenUsername)),
+		userLogic.Setup(
+			userClient.Setup(mongoClient),
+		),
 	)
 
 	r := chi.NewRouter()

@@ -7,6 +7,7 @@ import (
 
 type Config struct {
 	TakenUsername string `env:"TAKEN_USERNAME,required"`
+	MongoDBURI    string `env:"MONGO_DB_URI,required"`
 }
 
 func Get() (*Config, error) {

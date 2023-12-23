@@ -3,11 +3,11 @@ build:
 	go mod tidy
 	docker build --tag good-threads-backend .
 
-.PHONY: run
-run:
+.PHONY: reset
+reset:
 	docker-compose down
 	docker-compose up -d
 	docker-compose logs -f
 
-.PHONY: reset
-reset: build run
+.PHONY: from-scratch
+from-scratch: build reset

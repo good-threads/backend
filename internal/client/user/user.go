@@ -1,9 +1,11 @@
 package user
 
 import (
+	"context"
 	"log"
 
 	e "github.com/good-threads/backend/internal/errors"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Client interface {
@@ -11,17 +13,33 @@ type Client interface {
 }
 
 type client struct {
-	takenUsername string
+	mongoCollection *mongo.Collection
 }
 
-func Setup(takenUsername string) Client {
-	return &client{takenUsername: takenUsername}
+func Setup(mongoClient *mongo.Client) Client {
+	return &client{
+		mongoCollection: mongoClient.Database("goodthreads").Collection("users"),
+	}
 }
 
 func (c *client) Persist(username string, passwordHash []byte) error {
-	if username == c.takenUsername {
-		return &e.UsernameAlreadyTaken{}
+
+	result, err := c.mongoCollection.InsertOne(
+		context.TODO(),
+		User{
+			Name:         username,
+			PasswordHash: passwordHash,
+		},
+	)
+	if err != nil {
+		if mongo.IsDuplicateKeyError(err) {
+			return &e.UsernameAlreadyTaken{}
+		} else {
+			log.Println("mongo error while inserting user:", err)
+			return err
+		}
 	}
-	log.Println(username, passwordHash)
+
+	log.Printf("Inserted document with _id: %v\n", result.InsertedID)
 	return nil
 }
