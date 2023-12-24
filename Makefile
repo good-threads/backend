@@ -14,5 +14,6 @@ from-scratch: build reset
 
 .PHONY: test
 test:
-	go test ./... -coverprofile=cover.out
-	go tool cover -html=cover.out
+	go test ./... -coverprofile=cover.out -covermode=count
+	go tool cover -html=cover.out -o cover.html
+	firefox cover.html
