@@ -7,7 +7,5 @@ import (
 )
 
 func TestPing(t *testing.T) {
-	commonLogic := Setup()
-	result := commonLogic.Ping()
-	assert.Equal(t, "pong\n", result)
+	assert.Equal(t, "pong\n", Setup().Ping())
 }
