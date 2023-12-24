@@ -17,6 +17,6 @@ from-scratch: build reset
 test:
 	bash create-missing-tests.sh
 	go test ./... -coverprofile=cover.out -covermode=count
-	bash remove-mock-from-coverage.sh cover.out _mock.go
+	bash remove-lines-containing-token.sh cover.out _mock.go
 	go tool cover -html=cover.out -o cover.html
 	firefox cover.html

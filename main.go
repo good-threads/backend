@@ -5,9 +5,11 @@ import (
 	"net/http"
 
 	mongoClient "github.com/good-threads/backend/internal/client/mongo"
+	sessionClient "github.com/good-threads/backend/internal/client/session"
 	userClient "github.com/good-threads/backend/internal/client/user"
 	"github.com/good-threads/backend/internal/config"
 	commonLogic "github.com/good-threads/backend/internal/logic/common"
+	sessionLogic "github.com/good-threads/backend/internal/logic/session"
 	userLogic "github.com/good-threads/backend/internal/logic/user"
 	httpPresentation "github.com/good-threads/backend/internal/presentation/http"
 
@@ -19,12 +21,15 @@ func main() {
 
 	env := config.Get()
 	mongoClient := mongoClient.Setup(env.MongoDBURI)
+	userClient := userClient.Setup(mongoClient)
 	httpPresentation := httpPresentation.Setup(
 		commonLogic.Setup(),
-		userLogic.Setup(
-			userClient.Setup(
+		userLogic.Setup(userClient),
+		sessionLogic.Setup(
+			sessionClient.Setup(
 				mongoClient,
 			),
+			userClient,
 		),
 	)
 
@@ -33,6 +38,9 @@ func main() {
 
 	r.Get("/ping", httpPresentation.Ping)
 	r.Post("/user", httpPresentation.CreateUser)
+	r.Post("/login", httpPresentation.Login)
+	r.Get("/", httpPresentation.Ping)
+	r.Patch("/", httpPresentation.Ping)
 
 	log.Println("Listening...")
 	http.ListenAndServe(":3000", r)

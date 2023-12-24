@@ -10,6 +10,7 @@ import (
 
 type Client interface {
 	Persist(username string, passwordHash []byte) error
+	Fetch(username string) (*User, error)
 }
 
 type client struct {
@@ -42,4 +43,9 @@ func (c *client) Persist(username string, passwordHash []byte) error {
 
 	log.Printf("Inserted document with _id: %v\n", result.InsertedID)
 	return nil
+}
+
+func (c *client) Fetch(username string) (*User, error) {
+	result := c.mongoCollection.FindOne(context.TODO(), UserSearchFilter{Username: username})
+	return nil, nil
 }
