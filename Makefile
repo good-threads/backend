@@ -1,6 +1,7 @@
 .PHONY: build
 build:
 	go mod tidy
+	go test ./...
 	docker build --tag good-threads-backend .
 
 .PHONY: reset
