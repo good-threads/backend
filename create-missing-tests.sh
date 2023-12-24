@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Find all .go files excluding _test.go files
-go_files=$(find . -type f -name "*.go" ! -name "*_test.go")
+go_files=$(find . -type f -name "*.go" ! -name "*_test.go" ! -name "*_mock.go")
 
 # Loop through each .go file and generate _test.go files
 for file in $go_files; do
