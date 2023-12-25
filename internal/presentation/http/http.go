@@ -66,7 +66,12 @@ func (p *presentation) Login(w http.ResponseWriter, r *http.Request) {
 
 	id, err := p.session.Create(requestBody.Username, requestBody.Password)
 	if err == nil {
-		respondMessage(w, http.StatusCreated, id)
+		http.SetCookie(w, &http.Cookie{
+			Name:     "session",
+			Value:    id,
+			HttpOnly: true,
+		})
+		respondMessage(w, http.StatusCreated, "Session created")
 		return
 	}
 	switch err.(type) {

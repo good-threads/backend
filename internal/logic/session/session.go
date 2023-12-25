@@ -4,6 +4,7 @@ import (
 	"github.com/good-threads/backend/internal/client/session"
 	"github.com/good-threads/backend/internal/client/user"
 	e "github.com/good-threads/backend/internal/errors"
+	"github.com/segmentio/ksuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -29,13 +30,21 @@ func (l *logic) Create(username string, password string) (string, error) {
 	}
 	user, err := l.userClient.Fetch(username)
 	if err != nil {
-		return "", err
+		switch err.(type) {
+		case *e.UserNotFound:
+			return "", &e.WrongCredentials{}
+		default:
+			return "", err
+		}
 	}
 	err = bcrypt.CompareHashAndPassword(user.PasswordHash, []byte(password))
 	if err != nil {
 		return "", &e.WrongCredentials{}
 	}
-	id := "TODO"
-	err = l.sessionClient.Create(id, username)
-	return id, err
+	id, err := ksuid.NewRandom()
+	if err != nil {
+		return "", err
+	}
+	err = l.sessionClient.Create(id.String(), username)
+	return id.String(), err
 }

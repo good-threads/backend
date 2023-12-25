@@ -7,8 +7,6 @@ WORKDIR /app
 COPY go.mod go.sum main.go ./
 COPY internal ./internal
 
-RUN ls
-
 RUN go mod download            
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o /good-threads-backend

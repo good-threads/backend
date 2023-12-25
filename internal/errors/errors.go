@@ -15,3 +15,7 @@ func (e *BadUsername) Error() string { return "" }
 type WrongCredentials struct{}
 
 func (e *WrongCredentials) Error() string { return "" }
+
+type UserNotFound struct{}
+
+func (e *UserNotFound) Error() string { return "" }

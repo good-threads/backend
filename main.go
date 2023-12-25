@@ -38,9 +38,9 @@ func main() {
 
 	r.Get("/ping", httpPresentation.Ping)
 	r.Post("/user", httpPresentation.CreateUser)
-	r.Post("/login", httpPresentation.Login)
-	r.Get("/", httpPresentation.Ping)
-	r.Patch("/", httpPresentation.Ping)
+	r.Post("/session", httpPresentation.Login)
+	r.Get("/board", httpPresentation.Ping)
+	r.Patch("/board", httpPresentation.Ping)
 
 	log.Println("Listening...")
 	http.ListenAndServe(":3000", r)

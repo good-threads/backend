@@ -46,6 +46,12 @@ func (c *client) Persist(username string, passwordHash []byte) error {
 }
 
 func (c *client) Fetch(username string) (*User, error) {
-	result := c.mongoCollection.FindOne(context.TODO(), UserSearchFilter{Username: username})
-	return nil, nil
+	var user User
+	if err := c.mongoCollection.FindOne(context.TODO(), UserSearchFilter{Name: username}).Decode(&user); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, &e.UserNotFound{}
+		}
+		return nil, err
+	}
+	return &user, nil
 }
