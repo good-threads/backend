@@ -8,6 +8,7 @@ import (
 	sessionClient "github.com/good-threads/backend/internal/client/session"
 	userClient "github.com/good-threads/backend/internal/client/user"
 	"github.com/good-threads/backend/internal/config"
+	boardLogic "github.com/good-threads/backend/internal/logic/board"
 	commonLogic "github.com/good-threads/backend/internal/logic/common"
 	sessionLogic "github.com/good-threads/backend/internal/logic/session"
 	userLogic "github.com/good-threads/backend/internal/logic/user"
@@ -31,6 +32,7 @@ func main() {
 			),
 			userClient,
 		),
+		boardLogic.Setup(),
 	)
 
 	r := chi.NewRouter()
@@ -38,8 +40,8 @@ func main() {
 
 	r.Get("/ping", httpPresentation.Ping)
 	r.Post("/user", httpPresentation.CreateUser)
-	r.Post("/session", httpPresentation.Login)
-	r.Get("/board", httpPresentation.Ping)
+	r.Post("/session", httpPresentation.CreateSession)
+	r.Get("/board", httpPresentation.GetBoard)
 	r.Patch("/board", httpPresentation.Ping)
 
 	log.Println("Listening...")

@@ -3,6 +3,7 @@ package session
 import (
 	"context"
 	"log"
+	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -28,8 +29,9 @@ func (c *client) Create(id string, username string) error {
 	result, err := c.mongoCollection.InsertOne(
 		context.TODO(),
 		Session{
-			ID:       id,
-			Username: username,
+			ID:             id,
+			Username:       username,
+			LastUpdateDate: time.Now(),
 		},
 	)
 	if err != nil {
