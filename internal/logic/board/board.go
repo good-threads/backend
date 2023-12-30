@@ -5,10 +5,12 @@ import (
 	"github.com/good-threads/backend/internal/client/thread"
 	"github.com/good-threads/backend/internal/client/user"
 	e "github.com/good-threads/backend/internal/errors"
+	"github.com/segmentio/ksuid"
 )
 
 type Logic interface {
 	Get(username string) ([]thread.Thread, *string, error)
+	Update(username string, lastProcessedChangesetID *string, newChangesets []Changeset) (string, error)
 }
 
 type logic struct {
@@ -53,4 +55,12 @@ func (l *logic) Get(username string) ([]thread.Thread, *string, error) {
 	}
 
 	return threads, lastProcessedChangesetID, nil
+}
+
+func (l *logic) Update(username string, lastProcessedChangesetID *string, newChangesets []Changeset) (string, error) {
+	id, err := ksuid.NewRandom()
+	if err != nil {
+		return "", err
+	}
+	return id.String(), err
 }

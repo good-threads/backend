@@ -17,6 +17,7 @@ type Presentation interface {
 	CreateUser(w http.ResponseWriter, r *http.Request)
 	CreateSession(w http.ResponseWriter, r *http.Request)
 	GetBoard(w http.ResponseWriter, r *http.Request)
+	UpdateBoard(w http.ResponseWriter, r *http.Request)
 	GetUsernameFromSession(wrappedHandler http.Handler) http.Handler
 }
 
@@ -111,6 +112,37 @@ func (p *presentation) GetBoard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	switch err.(type) {
+	default:
+		log.Println("ERROR:", err)
+		respondMessage(w, http.StatusInternalServerError, "Your request couldn't be processed")
+	}
+}
+
+func (p *presentation) UpdateBoard(w http.ResponseWriter, r *http.Request) {
+
+	username, ok := r.Context().Value("username").(string) // TODO(thomasmarlow): de-duplicate these 5 lines
+	if !ok {
+		respondMessage(w, http.StatusUnauthorized, "Invalid session")
+		return
+	}
+
+	var requestBody BoardUpdates
+	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+		respondMessage(w, http.StatusBadRequest, "Incorrect JSON format")
+		return
+	}
+
+	lastProcessedChangesetID, err := p.board.Update(username, requestBody.LastProcessedChangesetID, requestBody.NewChangesets)
+	if err == nil {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(BoardUpdateOKResponse{
+			LastProcessedChangesetID: lastProcessedChangesetID,
+		})
+		return
+	}
+	switch err.(type) {
+	case *e.RequestedChangesWouldRewriteHistory:
+		respondMessage(w, http.StatusPreconditionFailed, "Requested changes would rewrite history - maybe another client is updating the same board; please discard changes and pull the latest board state")
 	default:
 		log.Println("ERROR:", err)
 		respondMessage(w, http.StatusInternalServerError, "Your request couldn't be processed")

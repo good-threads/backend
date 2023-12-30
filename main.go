@@ -56,7 +56,7 @@ func main() {
 	protected.Use(httpPresentation.GetUsernameFromSession)
 
 	protected.Get("/", httpPresentation.GetBoard)
-	protected.Patch("/", httpPresentation.Ping)
+	protected.Patch("/", httpPresentation.UpdateBoard)
 
 	for _, s := range []string{
 		"   ┓           ┓ ",

@@ -35,3 +35,7 @@ func (e *NoChangesetFound) Error() string { return "" }
 type NoThreadsFound struct{}
 
 func (e *NoThreadsFound) Error() string { return "" }
+
+type RequestedChangesWouldRewriteHistory struct{}
+
+func (e *RequestedChangesWouldRewriteHistory) Error() string { return "" }
