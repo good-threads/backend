@@ -3,6 +3,7 @@ package board
 import (
 	"encoding/json"
 	"errors"
+	"log"
 	"time"
 )
 
@@ -12,8 +13,8 @@ type Changeset struct {
 }
 
 type Changes struct {
-	Command Command     `json:"command"`
-	Payload interface{} `json:"payload"`
+	Command Command `json:"command"`
+	Payload any     `json:"payload"`
 }
 
 type Command struct {
@@ -31,7 +32,11 @@ type PayloadEditThread struct {
 	Name string `json:"name"`
 }
 
-func (c *Changes) UnmarshalJSON(data []byte) error { // TODO(thomasmarlow): move to aux?
+// TODO(thomasmarlow): move to aux?
+// TODO(thomasmarlow): this code is not being ran...
+func (c *Changes) UnmarshalJSON(data []byte) error {
+
+	log.Println(1)
 
 	// type aliasing to avoid infinite recursion on Changes.UnmarshallJSON
 	type Alias Changes
@@ -44,22 +49,33 @@ func (c *Changes) UnmarshalJSON(data []byte) error { // TODO(thomasmarlow): move
 		return err
 	}
 
-	switch c.Command.Type {
-	case "createThread": // TODO(thomasmarlow): de-duplicate these lines using generics
-		var payloadCreateThread PayloadCreateThread
-		if err := json.Unmarshal(data, &payloadCreateThread); err != nil {
-			return err
-		}
-		c.Payload = payloadCreateThread
-	case "editThread":
-		var payloadEditThread PayloadEditThread
-		if err := json.Unmarshal(data, &payloadEditThread); err != nil {
-			return err
-		}
-		c.Payload = payloadEditThread
-	default:
-		return errors.New("unknown command type") // TODO(thomasmarlow): i'm not being able to achieve this error; besides, implement actual custom error type
+	log.Println(2)
+
+	payload, validCommand := map[string]any{
+		"createThread": PayloadCreateThread{},
+		"editThread":   PayloadEditThread{},
+	}[c.Command.Type]
+	if !validCommand {
+
+		log.Println(3)
+
+		return errors.New("pepelio")
+		// if the error is handled now, the code becomes less clear/readable;
+		// it is somehow duplicate logic,
+		// but this code here is unavoidable,
+		// as the unmarshaling is the presentation layer's responsibility,
+		// and must not be delegated to the logic layer
 	}
+
+	log.Println(4)
+
+	if err := json.Unmarshal(data, &payload); err != nil {
+		return err
+	}
+
+	log.Println(5)
+
+	c.Payload = payload
 
 	return nil
 }
