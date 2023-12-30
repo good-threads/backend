@@ -1,10 +1,7 @@
 package user
 
 type User struct {
-	Name         string `bson:"name"`
-	PasswordHash []byte `bson:"password_hash"`
-}
-
-type UserSearchFilter struct {
-	Name string `bson:"name,omitempty"`
+	Name         string   `bson:"name"`
+	PasswordHash []byte   `bson:"passwordHash"`
+	Threads      []string `bson:"threads"`
 }

@@ -2,9 +2,9 @@ package user
 
 import (
 	"context"
-	"log"
 
 	e "github.com/good-threads/backend/internal/errors"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -25,29 +25,28 @@ func Setup(mongoClient *mongo.Client) Client {
 
 func (c *client) Persist(username string, passwordHash []byte) error {
 
-	result, err := c.mongoCollection.InsertOne(
+	_, err := c.mongoCollection.InsertOne(
 		context.TODO(),
 		User{
 			Name:         username,
 			PasswordHash: passwordHash,
+			Threads:      []string{},
 		},
 	)
 	if err != nil {
 		if mongo.IsDuplicateKeyError(err) {
 			return &e.UsernameAlreadyTaken{}
 		} else {
-			log.Println("mongo error while inserting user:", err)
 			return err
 		}
 	}
 
-	log.Printf("Inserted document with _id: %v\n", result.InsertedID)
 	return nil
 }
 
 func (c *client) Fetch(username string) (*User, error) {
 	var user User
-	if err := c.mongoCollection.FindOne(context.TODO(), UserSearchFilter{Name: username}).Decode(&user); err != nil {
+	if err := c.mongoCollection.FindOne(context.TODO(), bson.M{"name": username}).Decode(&user); err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, &e.UserNotFound{}
 		}

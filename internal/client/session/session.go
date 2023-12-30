@@ -2,14 +2,16 @@ package session
 
 import (
 	"context"
-	"log"
 	"time"
 
+	e "github.com/good-threads/backend/internal/errors"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Client interface {
 	Create(id string, username string) error
+	Fetch(sessionID string) (*Session, error)
 }
 
 type client struct {
@@ -24,9 +26,9 @@ func Setup(mongoClient *mongo.Client) Client {
 
 func (c *client) Create(id string, username string) error {
 
-	c.mongoCollection.DeleteMany(context.TODO(), SessionSearchFilter{Username: username})
+	c.mongoCollection.DeleteMany(context.TODO(), bson.M{"username": username})
 
-	result, err := c.mongoCollection.InsertOne(
+	_, err := c.mongoCollection.InsertOne(
 		context.TODO(),
 		Session{
 			ID:             id,
@@ -35,10 +37,19 @@ func (c *client) Create(id string, username string) error {
 		},
 	)
 	if err != nil {
-		log.Println("mongo error while inserting session:", err)
 		return err
 	}
 
-	log.Printf("Inserted document with _id: %v\n", result.InsertedID)
 	return nil
+}
+
+func (c *client) Fetch(sessionID string) (*Session, error) {
+	var session Session
+	if err := c.mongoCollection.FindOne(context.TODO(), bson.M{"id": sessionID}).Decode(&session); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, &e.SessionNotFound{}
+		}
+		return nil, err
+	}
+	return &session, nil
 }

@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 
 	e "github.com/good-threads/backend/internal/errors"
@@ -16,6 +17,7 @@ type Presentation interface {
 	CreateUser(w http.ResponseWriter, r *http.Request)
 	CreateSession(w http.ResponseWriter, r *http.Request)
 	GetBoard(w http.ResponseWriter, r *http.Request)
+	GetUsernameFromSession(wrappedHandler http.Handler) http.Handler
 }
 
 type presentation struct {
@@ -55,6 +57,7 @@ func (p *presentation) CreateUser(w http.ResponseWriter, r *http.Request) {
 	case *e.BadUsername:
 		respondMessage(w, http.StatusBadRequest, "Username must be ...")
 	default:
+		log.Println("ERROR:", err)
 		respondMessage(w, http.StatusInternalServerError, "Your request couldn't be processed")
 	}
 }
@@ -85,21 +88,31 @@ func (p *presentation) CreateSession(w http.ResponseWriter, r *http.Request) {
 	case *e.WrongCredentials:
 		respondMessage(w, http.StatusUnauthorized, "Wrong credentials")
 	default:
+		log.Println("ERROR:", err)
 		respondMessage(w, http.StatusInternalServerError, "Your request couldn't be processed")
 	}
 }
 
 func (p *presentation) GetBoard(w http.ResponseWriter, r *http.Request) {
 
-	username := r.Context().Value("username").(string)
+	username, ok := r.Context().Value("username").(string)
+	if !ok {
+		respondMessage(w, http.StatusUnauthorized, "Invalid session")
+		return
+	}
 
-	board, err := p.board.Get(username)
+	threads, lastProcessedChangesetID, err := p.board.Get(username)
 	if err == nil {
-		respondMessage(w, http.StatusOK, board)
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(Board{
+			Threads:                  threads,
+			LastProcessedChangesetID: lastProcessedChangesetID,
+		})
 		return
 	}
 	switch err.(type) {
 	default:
+		log.Println("ERROR:", err)
 		respondMessage(w, http.StatusInternalServerError, "Your request couldn't be processed")
 	}
 }

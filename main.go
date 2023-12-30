@@ -4,8 +4,10 @@ import (
 	"log"
 	"net/http"
 
+	changesetClient "github.com/good-threads/backend/internal/client/changeset"
 	mongoClient "github.com/good-threads/backend/internal/client/mongo"
 	sessionClient "github.com/good-threads/backend/internal/client/session"
+	threadClient "github.com/good-threads/backend/internal/client/thread"
 	userClient "github.com/good-threads/backend/internal/client/user"
 	"github.com/good-threads/backend/internal/config"
 	boardLogic "github.com/good-threads/backend/internal/logic/board"
@@ -32,18 +34,41 @@ func main() {
 			),
 			userClient,
 		),
-		boardLogic.Setup(),
+		boardLogic.Setup(
+			userClient,
+			changesetClient.Setup(
+				mongoClient,
+			),
+			threadClient.Setup(
+				mongoClient,
+			),
+		),
 	)
 
-	r := chi.NewRouter()
-	r.Use(middleware.Logger)
+	public := chi.NewRouter()
+	public.Use(middleware.Logger)
 
-	r.Get("/ping", httpPresentation.Ping)
-	r.Post("/user", httpPresentation.CreateUser)
-	r.Post("/session", httpPresentation.CreateSession)
-	r.Get("/board", httpPresentation.GetBoard)
-	r.Patch("/board", httpPresentation.Ping)
+	public.Get("/ping", httpPresentation.Ping)
+	public.Post("/user", httpPresentation.CreateUser)
+	public.Post("/session", httpPresentation.CreateSession)
 
-	log.Println("Listening...")
-	http.ListenAndServe(":3000", r)
+	protected := public.Group(nil)
+	protected.Use(httpPresentation.GetUsernameFromSession)
+
+	protected.Get("/", httpPresentation.GetBoard)
+	protected.Patch("/", httpPresentation.Ping)
+
+	for _, s := range []string{
+		"   ┓           ┓ ",
+		"   ┃┏┏┓┏┓╋┏┓┏┓┏┫ ",
+		"   ┛┗┛┗┗┛┗┣┛┗┻┗┻•",
+		"          ┛      ",
+		"    good threads.",
+		"",
+		"Listening...",
+		"",
+	} {
+		log.Println(s)
+	}
+	http.ListenAndServe(":3000", public)
 }

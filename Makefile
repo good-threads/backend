@@ -8,7 +8,10 @@ build:
 deploy:
 	docker-compose down
 	docker-compose up -d
-	docker-compose logs -f
+
+.PHONY: logs
+logs:
+	docker-compose logs -f backend
 
 .PHONY: from-scratch
 from-scratch: build deploy
@@ -23,4 +26,14 @@ cover:
 
 .PHONY: clean-db
 clean-db:
-	sudo rm -fr ./data
+	docker-compose down
+	sudo rm -fr ./.data
+
+.PHONY: e2e-tests
+e2e-tests: clean-db from-scratch
+	sleep 3
+	curl http://localhost:8080/ -b cookies
+	curl http://localhost:8080/session -d '{"username":"tom","password":"pepe123"}' -c cookies
+	curl http://localhost:8080/user -d '{"username":"tom","password":"pepe123"}'
+	curl http://localhost:8080/session -d '{"username":"tom","password":"pepe123"}' -c cookies
+	curl http://localhost:8080/ -b cookies

@@ -10,6 +10,7 @@ import (
 
 type Logic interface {
 	Create(username string, password string) (string, error)
+	GetUsername(sessionID string) (string, error)
 }
 
 type logic struct {
@@ -47,4 +48,16 @@ func (l *logic) Create(username string, password string) (string, error) {
 	}
 	err = l.sessionClient.Create(id.String(), username)
 	return id.String(), err
+}
+
+func (l *logic) GetUsername(sessionID string) (string, error) {
+	_, err := ksuid.Parse(sessionID)
+	if err != nil {
+		return "", &e.InvalidSession{}
+	}
+	session, err := l.sessionClient.Fetch(sessionID)
+	if err != nil {
+		return "", err
+	}
+	return session.Username, nil
 }
