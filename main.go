@@ -4,7 +4,7 @@ import (
 	"log"
 	"net/http"
 
-	changesetClient "github.com/good-threads/backend/internal/client/changeset"
+	commandClient "github.com/good-threads/backend/internal/client/command"
 	mongoClient "github.com/good-threads/backend/internal/client/mongo"
 	sessionClient "github.com/good-threads/backend/internal/client/session"
 	threadClient "github.com/good-threads/backend/internal/client/thread"
@@ -36,7 +36,7 @@ func main() {
 		),
 		boardLogic.Setup(
 			userClient,
-			changesetClient.Setup(
+			commandClient.Setup(
 				mongoClient,
 			),
 			threadClient.Setup(

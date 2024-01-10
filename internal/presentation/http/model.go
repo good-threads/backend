@@ -11,15 +11,15 @@ type Credentials struct {
 }
 
 type Board struct {
-	Threads                  []thread.Thread `json:"threads"`
-	LastProcessedChangesetID *string         `json:"lastProcessedChangesetID"`
+	Threads                []thread.Thread `json:"threads"`
+	LastProcessedCommandID *string         `json:"lastProcessedCommandID"`
 }
 
 type BoardUpdates struct {
-	LastProcessedChangesetID *string           `json:"lastProcessedChangesetID"`
-	NewChangesets            []board.Changeset `json:"newChangesets"`
+	LastProcessedCommandID *string         `json:"lastProcessedCommandID"`
+	Commands               []board.Command `json:"commands"`
 }
 
 type BoardUpdateOKResponse struct {
-	LastProcessedChangesetID string
+	LastProcessedCommandID *string `json:"lastProcessedCommandID"`
 }

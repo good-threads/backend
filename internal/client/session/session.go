@@ -36,11 +36,8 @@ func (c *client) Create(id string, username string) error {
 			LastUpdateDate: time.Now(),
 		},
 	)
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return err
 }
 
 func (c *client) Fetch(sessionID string) (*Session, error) {

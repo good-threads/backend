@@ -28,14 +28,26 @@ type SessionNotFound struct{}
 
 func (e *SessionNotFound) Error() string { return "" }
 
-type NoChangesetFound struct{}
+type NoCommandFound struct{}
 
-func (e *NoChangesetFound) Error() string { return "" }
+func (e *NoCommandFound) Error() string { return "" }
 
 type NoThreadsFound struct{}
 
 func (e *NoThreadsFound) Error() string { return "" }
 
-type RequestedChangesWouldRewriteHistory struct{}
+type ReceivedCommandsWouldRewriteHistory struct{}
 
-func (e *RequestedChangesWouldRewriteHistory) Error() string { return "" }
+func (e *ReceivedCommandsWouldRewriteHistory) Error() string { return "" }
+
+type GeneratedIDClashed struct{}
+
+func (e *GeneratedIDClashed) Error() string { return "" }
+
+type ThreadNotFound struct{}
+
+func (e *ThreadNotFound) Error() string { return "" }
+
+type KnotNotFound struct{}
+
+func (e *KnotNotFound) Error() string { return "" }

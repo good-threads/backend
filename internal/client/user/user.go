@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"errors"
 
 	e "github.com/good-threads/backend/internal/errors"
 	"go.mongodb.org/mongo-driver/bson"
@@ -11,6 +12,9 @@ import (
 type Client interface {
 	Persist(username string, passwordHash []byte) error
 	Fetch(username string) (*User, error)
+	AddThread(username string, id string) error
+	RemoveThread(username string, id string) error
+	RelocateThread(username string, id string, newIndex uint) error
 }
 
 type client struct {
@@ -24,7 +28,6 @@ func Setup(mongoClient *mongo.Client) Client {
 }
 
 func (c *client) Persist(username string, passwordHash []byte) error {
-
 	_, err := c.mongoCollection.InsertOne(
 		context.TODO(),
 		User{
@@ -33,15 +36,10 @@ func (c *client) Persist(username string, passwordHash []byte) error {
 			Threads:      []string{},
 		},
 	)
-	if err != nil {
-		if mongo.IsDuplicateKeyError(err) {
-			return &e.UsernameAlreadyTaken{}
-		} else {
-			return err
-		}
+	if mongo.IsDuplicateKeyError(err) {
+		return &e.UsernameAlreadyTaken{}
 	}
-
-	return nil
+	return err
 }
 
 func (c *client) Fetch(username string) (*User, error) {
@@ -53,4 +51,60 @@ func (c *client) Fetch(username string) (*User, error) {
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (c *client) AddThread(username string, id string) error {
+	result := c.mongoCollection.FindOneAndUpdate(context.TODO(),
+		bson.M{
+			"name": username,
+		},
+		bson.M{
+			"$push": bson.M{
+				"threads": id,
+			},
+		},
+	)
+	if errors.Is(result.Err(), mongo.ErrNoDocuments) {
+		return &e.UserNotFound{}
+	}
+	return result.Err()
+}
+
+func (c *client) RemoveThread(username string, id string) error {
+
+	result := c.mongoCollection.FindOneAndUpdate(context.TODO(),
+		bson.M{
+			"name": username,
+		},
+		bson.M{
+			"$pull": bson.M{
+				"threads": id,
+			},
+		},
+	)
+	if errors.Is(result.Err(), mongo.ErrNoDocuments) {
+		return &e.UserNotFound{}
+	}
+	return result.Err()
+}
+
+func (c *client) RelocateThread(username string, id string, newIndex uint) error {
+
+	result := c.mongoCollection.FindOneAndUpdate(context.TODO(),
+		bson.M{
+			"name": username,
+		},
+		bson.M{
+			"$set": bson.M{
+				"threads": bson.M{
+					"$each":     bson.A{id},
+					"$position": newIndex,
+				},
+			},
+		},
+	)
+	if errors.Is(result.Err(), mongo.ErrNoDocuments) {
+		return &e.UserNotFound{}
+	}
+	return result.Err()
 }

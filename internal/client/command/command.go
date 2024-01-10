@@ -1,7 +1,8 @@
-package changeset
+package command
 
 import (
 	"context"
+	"time"
 
 	e "github.com/good-threads/backend/internal/errors"
 	"go.mongodb.org/mongo-driver/bson"
@@ -11,6 +12,7 @@ import (
 
 type Client interface {
 	FetchLastID(username string) (*string, error)
+	RegisterProcessed(username string, id string) error
 }
 
 type client struct {
@@ -19,21 +21,33 @@ type client struct {
 
 func Setup(mongoClient *mongo.Client) Client {
 	return &client{
-		mongoCollection: mongoClient.Database("goodthreads").Collection("processed_changesets"),
+		mongoCollection: mongoClient.Database("goodthreads").Collection("processed_commands"),
 	}
 }
 
 func (c *client) FetchLastID(username string) (*string, error) {
-	var changeset Changeset
+	var command Command
 	if err := c.mongoCollection.FindOne(
 		context.TODO(),
 		bson.M{"username": username},
 		options.FindOne().SetSort(bson.M{"datetime": -1}),
-	).Decode(&changeset); err != nil {
+	).Decode(&command); err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, &e.NoChangesetFound{}
+			return nil, &e.NoCommandFound{}
 		}
 		return nil, err
 	}
-	return &changeset.ID, nil
+	return &command.ID, nil
+}
+
+func (c *client) RegisterProcessed(username string, id string) error {
+	_, err := c.mongoCollection.InsertOne(
+		context.TODO(),
+		Command{
+			ID:       id, // TODO(thomasmarlow): unique index
+			Username: username,
+			Datetime: time.Now(), // TODO(thomasmarlow): persist creationDatetime and processingDatetime
+		},
+	)
+	return err
 }

@@ -2,6 +2,7 @@ package http
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
@@ -58,7 +59,7 @@ func (p *presentation) CreateUser(w http.ResponseWriter, r *http.Request) {
 	case *e.BadUsername:
 		respondMessage(w, http.StatusBadRequest, "Username must be ...")
 	default:
-		log.Println("ERROR:", err)
+		log.Println("ERROR:", fmt.Sprintf("%T", err), err)
 		respondMessage(w, http.StatusInternalServerError, "Your request couldn't be processed")
 	}
 }
@@ -89,7 +90,7 @@ func (p *presentation) CreateSession(w http.ResponseWriter, r *http.Request) {
 	case *e.WrongCredentials:
 		respondMessage(w, http.StatusUnauthorized, "Wrong credentials")
 	default:
-		log.Println("ERROR:", err)
+		log.Println("ERROR:", fmt.Sprintf("%T", err), err)
 		respondMessage(w, http.StatusInternalServerError, "Your request couldn't be processed")
 	}
 }
@@ -102,18 +103,18 @@ func (p *presentation) GetBoard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	threads, lastProcessedChangesetID, err := p.board.Get(username)
+	threads, lastProcessedCommandID, err := p.board.Get(username)
 	if err == nil {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(Board{
-			Threads:                  threads,
-			LastProcessedChangesetID: lastProcessedChangesetID,
+			Threads:                threads,
+			LastProcessedCommandID: lastProcessedCommandID,
 		})
 		return
 	}
 	switch err.(type) {
 	default:
-		log.Println("ERROR:", err)
+		log.Println("ERROR:", fmt.Sprintf("%T", err), err)
 		respondMessage(w, http.StatusInternalServerError, "Your request couldn't be processed")
 	}
 }
@@ -128,23 +129,24 @@ func (p *presentation) UpdateBoard(w http.ResponseWriter, r *http.Request) {
 
 	var requestBody BoardUpdates
 	if err := json.NewDecoder(r.Body).Decode(&requestBody); err != nil {
+		log.Println("ERROR:", fmt.Sprintf("%T", err), err)
 		respondMessage(w, http.StatusBadRequest, "Incorrect JSON format")
 		return
 	}
 
-	lastProcessedChangesetID, err := p.board.Update(username, requestBody.LastProcessedChangesetID, requestBody.NewChangesets)
+	lastProcessedCommandID, err := p.board.Update(username, requestBody.LastProcessedCommandID, requestBody.Commands)
 	if err == nil {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(BoardUpdateOKResponse{
-			LastProcessedChangesetID: lastProcessedChangesetID,
+			LastProcessedCommandID: lastProcessedCommandID,
 		})
 		return
 	}
 	switch err.(type) {
-	case *e.RequestedChangesWouldRewriteHistory:
-		respondMessage(w, http.StatusPreconditionFailed, "Requested changes would rewrite history - maybe another client is updating the same board; please discard changes and pull the latest board state")
+	case *e.ReceivedCommandsWouldRewriteHistory:
+		respondMessage(w, http.StatusPreconditionFailed, "Requested commands would rewrite history - maybe another client is updating the same board; please discard commands and pull the latest board state")
 	default:
-		log.Println("ERROR:", err)
+		log.Println("ERROR:", fmt.Sprintf("%T", err), err)
 		respondMessage(w, http.StatusInternalServerError, "Your request couldn't be processed")
 	}
 }
