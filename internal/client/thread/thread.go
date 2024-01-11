@@ -3,6 +3,7 @@ package thread
 import (
 	"context"
 	"errors"
+	"log"
 
 	e "github.com/good-threads/backend/internal/errors"
 	"go.mongodb.org/mongo-driver/bson"
@@ -83,11 +84,13 @@ func (c *client) EditName(username string, id string, name string) error {
 }
 
 func (c *client) AddKnot(username string, threadID string, knotID string, knotBody string) error {
+	filter := bson.M{
+		"username": username,
+		"id":       threadID,
+	}
+	log.Println(filter)
 	result := c.mongoCollection.FindOneAndUpdate(context.TODO(),
-		bson.M{
-			"username": username,
-			"id":       threadID,
-		},
+		filter,
 		bson.M{
 			"$push": bson.M{
 				"knots": Knot{

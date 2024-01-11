@@ -52,7 +52,7 @@ type PayloadDeleteKnot struct {
 }
 
 // TODO(thomasmarlow): move to aux?
-func (c *Command) UnmarshalJSON(data []byte) error {
+func (c *Command) UnmarshalJSONAltVersion(data []byte) error {
 	type PayloadUnmarshalFunc func(data []byte, c *Command) error
 
 	payloadFuncs := map[string]PayloadUnmarshalFunc{
@@ -102,15 +102,17 @@ func (c *Command) UnmarshalJSON(data []byte) error {
 }
 
 func unmarshalPayload[Payload any](data []byte, c *Command) error {
+	log.Println(data)
 	payload := new(Payload)
 	if err := json.Unmarshal(data, payload); err != nil {
 		return err
 	}
+	log.Println(*payload)
 	c.Payload = *payload
 	return nil
 }
 
-func (c *Command) UnmarshalJSONAltVersion(data []byte) error { // TODO(thomasmarlow): benchmark and make a choice
+func (c *Command) UnmarshalJSONSSSS(data []byte) error { // TODO(thomasmarlow): benchmark and make a choice
 	log.Println(1)
 
 	// type aliasing to avoid infinite recursion on Commands.UnmarshallJSON

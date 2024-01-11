@@ -51,3 +51,7 @@ func (e *ThreadNotFound) Error() string { return "" }
 type KnotNotFound struct{}
 
 func (e *KnotNotFound) Error() string { return "" }
+
+type BadPayload struct{}
+
+func (e *BadPayload) Error() string { return "" }

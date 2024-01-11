@@ -32,8 +32,4 @@ clean-db:
 .PHONY: e2e-tests
 e2e-tests: clean-db from-scratch
 	sleep 3
-	curl http://localhost:8080/ -b cookies
-	curl http://localhost:8080/session -d '{"username":"tom","password":"pepe123"}' -c cookies
-	curl http://localhost:8080/user -d '{"username":"tom","password":"pepe123"}'
-	curl http://localhost:8080/session -d '{"username":"tom","password":"pepe123"}' -c cookies
-	curl http://localhost:8080/ -b cookies
+	bash -x e2e-tests.sh

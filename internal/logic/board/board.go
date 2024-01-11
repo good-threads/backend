@@ -2,11 +2,13 @@ package board
 
 import (
 	"errors"
+	"log"
 
 	"github.com/good-threads/backend/internal/client/command"
 	"github.com/good-threads/backend/internal/client/thread"
 	"github.com/good-threads/backend/internal/client/user"
 	e "github.com/good-threads/backend/internal/errors"
+	"github.com/mitchellh/mapstructure"
 )
 
 type Logic interface {
@@ -85,7 +87,10 @@ func (l *logic) Update(username string, clientsideLastProcessedCommandID *string
 	for _, command := range commands {
 		switch command.Type {
 		case "createThread":
-			payload := command.Payload.(PayloadCreateThread)
+			payload, err := decode[PayloadCreateThread](command.Payload)
+			if err != nil {
+				return serversideLastProcessedCommandID, &e.BadPayload{}
+			}
 			if err := l.threadClient.Create(username, payload.ID, payload.Name); err != nil {
 				return serversideLastProcessedCommandID, err
 			}
@@ -93,32 +98,51 @@ func (l *logic) Update(username string, clientsideLastProcessedCommandID *string
 				return serversideLastProcessedCommandID, err
 			}
 		case "editThreadName":
-			payload := command.Payload.(PayloadEditThreadName)
+			payload, err := decode[PayloadEditThreadName](command.Payload)
+			if err != nil {
+				return serversideLastProcessedCommandID, &e.BadPayload{}
+			}
 			if err := l.threadClient.EditName(username, payload.ID, payload.Name); err != nil {
 				return serversideLastProcessedCommandID, err
 			}
 		case "hideThread":
-			payload := command.Payload.(PayloadHideThread)
+			payload, err := decode[PayloadHideThread](command.Payload)
+			if err != nil {
+				return serversideLastProcessedCommandID, &e.BadPayload{}
+			}
 			if err := l.userClient.RemoveThread(username, payload.ID); err != nil {
 				return serversideLastProcessedCommandID, err
 			}
-		case "repositionThread":
-			payload := command.Payload.(PayloadRelocateThread)
+		case "relocateThread":
+			payload, err := decode[PayloadRelocateThread](command.Payload)
+			if err != nil {
+				return serversideLastProcessedCommandID, &e.BadPayload{}
+			}
 			if err := l.userClient.RelocateThread(username, payload.ID, payload.NewIndex); err != nil {
 				return serversideLastProcessedCommandID, err
 			}
 		case "createKnot":
-			payload := command.Payload.(PayloadCreateKnot)
+			payload, err := decode[PayloadCreateKnot](command.Payload)
+			if err != nil {
+				return serversideLastProcessedCommandID, &e.BadPayload{}
+			}
+			log.Println(payload)
 			if err := l.threadClient.AddKnot(username, payload.ThreadID, payload.KnotID, payload.KnotBody); err != nil {
 				return serversideLastProcessedCommandID, err
 			}
 		case "editKnot":
-			payload := command.Payload.(PayloadEditKnot)
+			payload, err := decode[PayloadEditKnot](command.Payload)
+			if err != nil {
+				return serversideLastProcessedCommandID, &e.BadPayload{}
+			}
 			if err := l.threadClient.EditKnot(username, payload.ThreadID, payload.KnotID, payload.KnotBody); err != nil {
 				return serversideLastProcessedCommandID, err
 			}
 		case "deleteKnot":
-			payload := command.Payload.(PayloadDeleteKnot)
+			payload, err := decode[PayloadDeleteKnot](command.Payload)
+			if err != nil {
+				return serversideLastProcessedCommandID, &e.BadPayload{}
+			}
 			if err := l.threadClient.DeleteKnot(username, payload.ThreadID, payload.KnotID); err != nil {
 				return serversideLastProcessedCommandID, err
 			}
@@ -132,4 +156,10 @@ func (l *logic) Update(username string, clientsideLastProcessedCommandID *string
 	}
 
 	return serversideLastProcessedCommandID, nil
+}
+
+func decode[Payload any](undecodedPayload any) (Payload, error) {
+	var payload Payload
+	err := mapstructure.Decode(undecodedPayload, &payload)
+	return payload, err
 }
