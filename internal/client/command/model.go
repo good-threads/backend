@@ -1,9 +1,9 @@
 package command
 
-import "time"
+import mongoClient "github.com/good-threads/backend/internal/client/mongo"
 
 type Command struct {
-	ID       string    `bson:"id"`
-	Username string    `bson:"username"`
-	Datetime time.Time `bson:"datetime"`
+	ID       string               `bson:"id"`
+	Username string               `bson:"username"`
+	Datetime mongoClient.NanoTime `bson:"datetime"`
 }

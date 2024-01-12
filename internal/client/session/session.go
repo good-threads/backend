@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	mongoClient "github.com/good-threads/backend/internal/client/mongo"
+
 	e "github.com/good-threads/backend/internal/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -33,7 +35,7 @@ func (c *client) Create(id string, username string) error {
 		Session{
 			ID:             id,
 			Username:       username,
-			LastUpdateDate: time.Now(),
+			LastUpdateDate: mongoClient.NanoTime{time.Now()},
 		},
 	)
 

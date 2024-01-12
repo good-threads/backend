@@ -5,14 +5,15 @@ import (
 	"errors"
 	"log"
 	"reflect"
-	"time"
+
+	mongoClient "github.com/good-threads/backend/internal/client/mongo"
 )
 
 type Command struct {
-	ID       string    `json:"id"`
-	Type     string    `json:"type"`
-	Datetime time.Time `json:"datetime"`
-	Payload  any       `json:"payload"`
+	ID       string               `json:"id"`
+	Type     string               `json:"type"`
+	Datetime mongoClient.NanoTime `json:"datetime"` // TODO(thomasmarlow): unused
+	Payload  any                  `json:"payload"`
 }
 
 type PayloadCreateThread struct {

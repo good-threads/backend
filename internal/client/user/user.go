@@ -95,7 +95,7 @@ func (c *client) RelocateThread(username string, id string, newIndex uint) error
 			"name": username,
 		},
 		bson.M{
-			"$set": bson.M{
+			"$push": bson.M{
 				"threads": bson.M{
 					"$each":     bson.A{id},
 					"$position": newIndex,

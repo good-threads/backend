@@ -30,14 +30,17 @@ func Setup(mongoClient *mongo.Client) Client {
 
 func (c *client) Fetch(ids []string) ([]Thread, error) {
 
-	cursor, err := c.mongoCollection.Find(
-		context.TODO(),
-		bson.M{
-			"id": bson.M{
-				"$in": ids,
-			},
+	cursor, err := c.mongoCollection.Aggregate(context.TODO(), mongo.Pipeline{
+		{
+			{"$match", bson.M{"id": bson.M{"$in": ids}}},
 		},
-	)
+		{
+			{"$addFields", bson.M{"order": bson.M{"$indexOfArray": bson.A{ids, "$id"}}}},
+		},
+		{
+			{"$sort", bson.M{"order": 1}},
+		},
+	})
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return nil, &e.NoThreadsFound{}
@@ -131,7 +134,9 @@ func (c *client) DeleteKnot(username string, threadID string, knotID string) err
 		},
 		bson.M{
 			"$pull": bson.M{
-				"knots": knotID,
+				"knots": bson.M{
+					"id": knotID,
+				},
 			},
 		},
 	)

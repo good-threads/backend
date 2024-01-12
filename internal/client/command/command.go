@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	mongoClient "github.com/good-threads/backend/internal/client/mongo"
 	e "github.com/good-threads/backend/internal/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -46,7 +47,7 @@ func (c *client) RegisterProcessed(username string, id string) error {
 		Command{
 			ID:       id, // TODO(thomasmarlow): unique index
 			Username: username,
-			Datetime: time.Now(), // TODO(thomasmarlow): persist creationDatetime and processingDatetime
+			Datetime: mongoClient.NanoTime{time.Now()}, // TODO(thomasmarlow): persist creationDatetime and processingDatetime
 		},
 	)
 	return err
