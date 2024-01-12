@@ -2,7 +2,6 @@ package board
 
 import (
 	"errors"
-	"log"
 
 	"github.com/good-threads/backend/internal/client/command"
 	"github.com/good-threads/backend/internal/client/thread"
@@ -85,69 +84,20 @@ func (l *logic) Update(username string, clientsideLastProcessedCommandID *string
 	}
 
 	for _, command := range commands {
-		switch command.Type {
-		case "createThread":
-			payload, err := decode[PayloadCreateThread](command.Payload)
-			if err != nil {
-				return serversideLastProcessedCommandID, &e.BadPayload{}
-			}
-			if err := l.threadClient.Create(username, payload.ID, payload.Name); err != nil {
-				return serversideLastProcessedCommandID, err
-			}
-			if err := l.userClient.AddThread(username, payload.ID); err != nil {
-				return serversideLastProcessedCommandID, err
-			}
-		case "editThreadName":
-			payload, err := decode[PayloadEditThreadName](command.Payload)
-			if err != nil {
-				return serversideLastProcessedCommandID, &e.BadPayload{}
-			}
-			if err := l.threadClient.EditName(username, payload.ID, payload.Name); err != nil {
-				return serversideLastProcessedCommandID, err
-			}
-		case "hideThread":
-			payload, err := decode[PayloadHideThread](command.Payload)
-			if err != nil {
-				return serversideLastProcessedCommandID, &e.BadPayload{}
-			}
-			if err := l.userClient.RemoveThread(username, payload.ID); err != nil {
-				return serversideLastProcessedCommandID, err
-			}
-		case "relocateThread":
-			payload, err := decode[PayloadRelocateThread](command.Payload)
-			if err != nil {
-				return serversideLastProcessedCommandID, &e.BadPayload{}
-			}
-			if err := l.userClient.RelocateThread(username, payload.ID, payload.NewIndex); err != nil {
-				return serversideLastProcessedCommandID, err
-			}
-		case "createKnot":
-			payload, err := decode[PayloadCreateKnot](command.Payload)
-			if err != nil {
-				return serversideLastProcessedCommandID, &e.BadPayload{}
-			}
-			log.Println(payload)
-			if err := l.threadClient.AddKnot(username, payload.ThreadID, payload.KnotID, payload.KnotBody); err != nil {
-				return serversideLastProcessedCommandID, err
-			}
-		case "editKnot":
-			payload, err := decode[PayloadEditKnot](command.Payload)
-			if err != nil {
-				return serversideLastProcessedCommandID, &e.BadPayload{}
-			}
-			if err := l.threadClient.EditKnot(username, payload.ThreadID, payload.KnotID, payload.KnotBody); err != nil {
-				return serversideLastProcessedCommandID, err
-			}
-		case "deleteKnot":
-			payload, err := decode[PayloadDeleteKnot](command.Payload)
-			if err != nil {
-				return serversideLastProcessedCommandID, &e.BadPayload{}
-			}
-			if err := l.threadClient.DeleteKnot(username, payload.ThreadID, payload.KnotID); err != nil {
-				return serversideLastProcessedCommandID, err
-			}
-		default:
+		decodeAndProcess, validCommandType := map[string]func(*logic, string, any) error{
+			"createThread":   getDecodeAndProcessFunction[PayloadCreateThread],
+			"editThreadName": getDecodeAndProcessFunction[PayloadEditThreadName],
+			"hideThread":     getDecodeAndProcessFunction[PayloadHideThread],
+			"relocateThread": getDecodeAndProcessFunction[PayloadRelocateThread],
+			"createKnot":     getDecodeAndProcessFunction[PayloadCreateKnot],
+			"editKnot":       getDecodeAndProcessFunction[PayloadEditKnot],
+			"deleteKnot":     getDecodeAndProcessFunction[PayloadDeleteKnot],
+		}[command.Type]
+		if !validCommandType {
 			return serversideLastProcessedCommandID, errors.New("shouldn't happen (TODO(thomasmarlow))")
+		}
+		if err := decodeAndProcess(l, username, command.Payload); err != nil {
+			return serversideLastProcessedCommandID, err
 		}
 		if err := l.commandClient.RegisterProcessed(username, command.ID); err != nil {
 			return serversideLastProcessedCommandID, err
@@ -158,8 +108,45 @@ func (l *logic) Update(username string, clientsideLastProcessedCommandID *string
 	return serversideLastProcessedCommandID, nil
 }
 
-func decode[Payload any](undecodedPayload any) (Payload, error) {
+func getDecodeAndProcessFunction[Payload Processable](l *logic, username string, undecodedPayload any) error {
 	var payload Payload
-	err := mapstructure.Decode(undecodedPayload, &payload)
-	return payload, err
+	if err := mapstructure.Decode(undecodedPayload, &payload); err != nil {
+		return &e.BadPayload{}
+	}
+	return payload.Process(l, username)
+}
+
+type Processable interface {
+	Process(l *logic, username string) error
+}
+
+func (p PayloadCreateThread) Process(l *logic, username string) error {
+	if err := l.threadClient.Create(username, p.ID, p.Name); err != nil {
+		return err
+	}
+	return l.userClient.AddThread(username, p.ID)
+}
+
+func (p PayloadEditThreadName) Process(l *logic, username string) error {
+	return l.threadClient.EditName(username, p.ID, p.Name)
+}
+
+func (p PayloadHideThread) Process(l *logic, username string) error {
+	return l.userClient.RemoveThread(username, p.ID)
+}
+
+func (p PayloadRelocateThread) Process(l *logic, username string) error {
+	return l.userClient.RelocateThread(username, p.ID, p.NewIndex)
+}
+
+func (p PayloadCreateKnot) Process(l *logic, username string) error {
+	return l.threadClient.AddKnot(username, p.ThreadID, p.KnotID, p.KnotBody)
+}
+
+func (p PayloadEditKnot) Process(l *logic, username string) error {
+	return l.threadClient.EditKnot(username, p.ThreadID, p.KnotID, p.KnotBody)
+}
+
+func (p PayloadDeleteKnot) Process(l *logic, username string) error {
+	return l.threadClient.DeleteKnot(username, p.ThreadID, p.KnotID)
 }
