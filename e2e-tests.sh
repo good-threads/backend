@@ -82,7 +82,7 @@ curl http://localhost:8080/ -b cookies -X PATCH -d '{
         {
             "id": "c9",
             "datetime": "'"$(date --rfc-3339=seconds | sed -e 's/ /T/')"'",
-            "type": "editKnot",
+            "type": "editKnotBody",
             "payload": {
                 "threadID": "t1",
                 "knotID": "k2",

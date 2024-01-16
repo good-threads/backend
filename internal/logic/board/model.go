@@ -36,7 +36,7 @@ type PayloadCreateKnot struct {
 	KnotBody string `json:"knotBody"`
 }
 
-type PayloadEditKnot struct {
+type PayloadEditKnotBody struct {
 	ThreadID string `json:"threadID"`
 	KnotID   string `json:"knotID"`
 	KnotBody string `json:"knotBody"`

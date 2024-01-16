@@ -90,7 +90,7 @@ func (l *logic) Update(username string, clientsideLastProcessedCommandID *string
 			"hideThread":     getDecodeAndProcessFunction[PayloadHideThread],
 			"relocateThread": getDecodeAndProcessFunction[PayloadRelocateThread],
 			"createKnot":     getDecodeAndProcessFunction[PayloadCreateKnot],
-			"editKnot":       getDecodeAndProcessFunction[PayloadEditKnot],
+			"editKnotBody":   getDecodeAndProcessFunction[PayloadEditKnotBody],
 			"deleteKnot":     getDecodeAndProcessFunction[PayloadDeleteKnot],
 		}[command.Type]
 		if !validCommandType {
@@ -143,8 +143,8 @@ func (p PayloadCreateKnot) Process(l *logic, username string) error {
 	return l.threadClient.AddKnot(username, p.ThreadID, p.KnotID, p.KnotBody)
 }
 
-func (p PayloadEditKnot) Process(l *logic, username string) error {
-	return l.threadClient.EditKnot(username, p.ThreadID, p.KnotID, p.KnotBody)
+func (p PayloadEditKnotBody) Process(l *logic, username string) error {
+	return l.threadClient.EditKnotBody(username, p.ThreadID, p.KnotID, p.KnotBody)
 }
 
 func (p PayloadDeleteKnot) Process(l *logic, username string) error {

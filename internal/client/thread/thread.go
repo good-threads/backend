@@ -14,7 +14,7 @@ type Client interface {
 	Create(username string, id string, name string) error
 	EditName(username string, id string, name string) error
 	AddKnot(username string, threadID string, knotID string, knotBody string) error
-	EditKnot(username string, threadID string, knotID string, knotBody string) error
+	EditKnotBody(username string, threadID string, knotID string, knotBody string) error
 	DeleteKnot(username string, threadID string, knotID string) error
 }
 
@@ -107,7 +107,7 @@ func (c *client) AddKnot(username string, threadID string, knotID string, knotBo
 	return result.Err()
 }
 
-func (c *client) EditKnot(username string, threadID string, knotID string, knotBody string) error {
+func (c *client) EditKnotBody(username string, threadID string, knotID string, knotBody string) error {
 	result := c.mongoCollection.FindOneAndUpdate(context.TODO(),
 		bson.M{
 			"username": username,
