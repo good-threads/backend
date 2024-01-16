@@ -1,5 +1,9 @@
 .PHONY: build
 build:
+	docker build --tag good-threads-backend .
+
+.PHONY: test-and-build
+test-and-build:
 	go mod tidy
 	go test ./...
 	docker build --tag good-threads-backend .
@@ -14,7 +18,7 @@ logs:
 	docker-compose logs -f backend
 
 .PHONY: from-scratch
-from-scratch: build deploy
+from-scratch: test-and-build deploy
 
 .PHONY: cover
 cover:
