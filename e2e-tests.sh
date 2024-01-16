@@ -1,3 +1,8 @@
+# this basic test script / request list can be used as a means to understand
+# the way the API works. it's meant to be read from top to bottom,
+# as the requests are ordered in a way that shows how the state of the
+# application evolves.
+
 # get board
 #
 # as no session cookie is set,
