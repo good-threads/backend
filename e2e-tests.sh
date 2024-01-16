@@ -1,8 +1,55 @@
+# get board
+#
+# as no session cookie is set,
+# a 401 should be returned
+#
+# expected response body:
+# {"message":"Invalid session"}
 curl http://localhost:8080/ -b cookies
+
+# create session
+#
+# as the credentials don't match any existing user,
+# a 401 should be returned
+#
+# expected response body:
+# {"message":"Wrong credentials"}
 curl http://localhost:8080/session -d '{"username":"tom","password":"pepe123"}' -c cookies
+
+# create user
+#
+# as the request was made just fine,
+# a 201 should be returned
+#
+# expected response body:
+# {"message":"User created"}
 curl http://localhost:8080/user -d '{"username":"tom","password":"pepe123"}'
+
+# create session
+#
+# as the request was made just fine,
+# a 201 should be returned
+#
+# expected response body:
+# {"message":"Session created"}
 curl http://localhost:8080/session -d '{"username":"tom","password":"pepe123"}' -c cookies
+
+# get board
+#
+# as the request was made just fine (it now includes a valid session cookie),
+# a 200 should be returned, with an empty board
+#
+# expected response body:
+# {"threads":[],"lastProcessedCommandID":null}
 curl http://localhost:8080/ -b cookies
+
+# patch board
+#
+# as the request was made just fine,
+# a 200 should be returned, indicating the last processed command id (should be c10)
+#
+# expected response body:
+# {"lastProcessedCommandID":"c10"}
 curl http://localhost:8080/ -b cookies -X PATCH -d '{
     "lastProcessedCommandID": null,
     "commands": [
@@ -101,4 +148,12 @@ curl http://localhost:8080/ -b cookies -X PATCH -d '{
         }
     ]
 }'
+
+# get board
+#
+# as the request was made just fine (and changes were made to the board),
+# a 200 should be returned, showing the new state of the board
+#
+# expected response body:
+# {"threads":[{"id":"t3","name":"the amazing thread","knots":[]},{"id":"t1","name":"the pepe thread","knots":[{"id":"k2","body":"the edit is real"},{"id":"k3","body":"the last knot"}]}],"lastProcessedCommandID":"c10"}
 curl http://localhost:8080/ -b cookies
