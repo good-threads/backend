@@ -55,3 +55,7 @@ func (e *KnotNotFound) Error() string { return "" }
 type BadPayload struct{}
 
 func (e *BadPayload) Error() string { return "" }
+
+type ThreadIDIsNotString struct{}
+
+func (e *ThreadIDIsNotString) Error() string { return "" }

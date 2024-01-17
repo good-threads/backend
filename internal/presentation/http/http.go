@@ -6,10 +6,12 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	e "github.com/good-threads/backend/internal/errors"
 	"github.com/good-threads/backend/internal/logic/board"
 	"github.com/good-threads/backend/internal/logic/common"
 	"github.com/good-threads/backend/internal/logic/session"
+	"github.com/good-threads/backend/internal/logic/thread"
 	"github.com/good-threads/backend/internal/logic/user"
 )
 
@@ -19,6 +21,7 @@ type Presentation interface {
 	CreateSession(w http.ResponseWriter, r *http.Request)
 	GetBoard(w http.ResponseWriter, r *http.Request)
 	UpdateBoard(w http.ResponseWriter, r *http.Request)
+	GetThread(w http.ResponseWriter, r *http.Request)
 	GetUsernameFromSession(wrappedHandler http.Handler) http.Handler
 }
 
@@ -27,10 +30,11 @@ type presentation struct {
 	user    user.Logic
 	session session.Logic
 	board   board.Logic
+	thread  thread.Logic
 }
 
-func Setup(common common.Logic, user user.Logic, session session.Logic, board board.Logic) Presentation {
-	return &presentation{common: common, user: user, session: session, board: board}
+func Setup(common common.Logic, user user.Logic, session session.Logic, board board.Logic, thread thread.Logic) Presentation {
+	return &presentation{common: common, user: user, session: session, board: board, thread: thread}
 }
 
 func (p *presentation) Ping(w http.ResponseWriter, r *http.Request) {
@@ -103,11 +107,12 @@ func (p *presentation) GetBoard(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	threads, lastProcessedCommandID, err := p.board.Get(username)
+	activeThreads, hiddenThreads, lastProcessedCommandID, err := p.board.Get(username)
 	if err == nil {
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(Board{
-			Threads:                threads,
+			ActiveThreads:          activeThreads,
+			HiddenThreads:          hiddenThreads,
 			LastProcessedCommandID: lastProcessedCommandID,
 		})
 		return
@@ -145,6 +150,29 @@ func (p *presentation) UpdateBoard(w http.ResponseWriter, r *http.Request) {
 	switch err.(type) {
 	case *e.ReceivedCommandsWouldRewriteHistory:
 		respondMessage(w, http.StatusPreconditionFailed, "Requested commands would rewrite history - maybe another client is updating the same board; please discard commands and pull the latest board state")
+	default:
+		log.Println("ERROR:", fmt.Sprintf("%T", err), err)
+		respondMessage(w, http.StatusInternalServerError, "Your request couldn't be processed")
+	}
+}
+
+func (p *presentation) GetThread(w http.ResponseWriter, r *http.Request) {
+
+	username, ok := r.Context().Value("username").(string)
+	if !ok {
+		respondMessage(w, http.StatusUnauthorized, "Invalid session")
+		return
+	}
+
+	id := chi.URLParam(r, "id")
+
+	thread, err := p.thread.Get(username, id)
+	if err == nil {
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(thread)
+		return
+	}
+	switch err.(type) {
 	default:
 		log.Println("ERROR:", fmt.Sprintf("%T", err), err)
 		respondMessage(w, http.StatusInternalServerError, "Your request couldn't be processed")

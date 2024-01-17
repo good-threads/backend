@@ -10,12 +10,13 @@ import (
 )
 
 type Client interface {
-	Fetch(ids []string) ([]Thread, error)
+	FetchAll(username string, ids []string) ([]Thread, []string, error)
 	Create(username string, id string, name string) error
 	EditName(username string, id string, name string) error
 	AddKnot(username string, threadID string, knotID string, knotBody string) error
 	EditKnotBody(username string, threadID string, knotID string, knotBody string) error
 	DeleteKnot(username string, threadID string, knotID string) error
+	FetchOne(username string, id string) (*Thread, error)
 }
 
 type client struct {
@@ -28,7 +29,7 @@ func Setup(mongoClient *mongo.Client) Client {
 	}
 }
 
-func (c *client) Fetch(ids []string) ([]Thread, error) {
+func (c *client) FetchAll(username string, ids []string) ([]Thread, []string, error) {
 
 	cursor, err := c.mongoCollection.Aggregate(context.TODO(), mongo.Pipeline{
 		{
@@ -41,17 +42,34 @@ func (c *client) Fetch(ids []string) ([]Thread, error) {
 			{"$sort", bson.M{"order": 1}},
 		},
 	})
-	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil, &e.NoThreadsFound{}
-		}
-		return nil, err
+	if err != nil && err != mongo.ErrNoDocuments {
+		return []Thread{}, nil, err
 	}
 
-	var threads []Thread
-	err = cursor.All(context.TODO(), &threads)
+	activeThreads := []Thread{}
+	err = cursor.All(context.TODO(), &activeThreads)
+	if err != nil {
+		return []Thread{}, nil, err
+	}
 
-	return threads, err
+	unassertedHiddenThreadIDs, err := c.mongoCollection.Distinct(context.TODO(), "id", bson.M{
+		"username": username,
+		"id":       bson.M{"$nin": ids},
+	})
+	if err != nil && err != mongo.ErrNoDocuments {
+		return activeThreads, nil, err
+	}
+
+	hiddenThreadIDs := make([]string, 0)
+	for _, uncastedID := range unassertedHiddenThreadIDs {
+		id, ok := uncastedID.(string)
+		if !ok {
+			return activeThreads, nil, &e.ThreadIDIsNotString{}
+		}
+		hiddenThreadIDs = append(hiddenThreadIDs, id)
+	}
+
+	return activeThreads, hiddenThreadIDs, err
 }
 
 func (c *client) Create(username string, id string, name string) error {
@@ -145,4 +163,16 @@ func (c *client) DeleteKnot(username string, threadID string, knotID string) err
 	}
 	// TODO(thomasmarlow): knot not found (no docs updated)
 	return result.Err()
+}
+
+func (c *client) FetchOne(username string, id string) (*Thread, error) {
+	var thread Thread
+	err := c.mongoCollection.FindOne(context.TODO(), bson.M{
+		"username": username,
+		"id":       id,
+	}).Decode(&thread)
+	if err == mongo.ErrNoDocuments {
+		return nil, &e.ThreadNotFound{}
+	}
+	return &thread, err
 }

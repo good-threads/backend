@@ -25,6 +25,10 @@ type PayloadHideThread struct {
 	ID string `json:"id"`
 }
 
+type PayloadShowThread struct {
+	ID string `json:"id"`
+}
+
 type PayloadRelocateThread struct {
 	ID       string `json:"id"`
 	NewIndex uint   `json:"newIndex"`

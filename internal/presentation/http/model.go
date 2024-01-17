@@ -11,7 +11,8 @@ type Credentials struct {
 }
 
 type Board struct {
-	Threads                []thread.Thread `json:"threads"`
+	ActiveThreads          []thread.Thread `json:"activeThreads"`
+	HiddenThreads          []string        `json:"hiddenThreads"`
 	LastProcessedCommandID *string         `json:"lastProcessedCommandID"`
 }
 

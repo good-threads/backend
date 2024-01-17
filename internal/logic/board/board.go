@@ -11,7 +11,7 @@ import (
 )
 
 type Logic interface {
-	Get(username string) ([]thread.Thread, *string, error)
+	Get(username string) ([]thread.Thread, []string, *string, error)
 	Update(username string, lastProcessedCommandID *string, commands []Command) (*string, error)
 }
 
@@ -25,11 +25,11 @@ func Setup(userClient user.Client, commandClient command.Client, threadClient th
 	return &logic{userClient: userClient, commandClient: commandClient, threadClient: threadClient}
 }
 
-func (l *logic) Get(username string) ([]thread.Thread, *string, error) {
+func (l *logic) Get(username string) ([]thread.Thread, []string, *string, error) {
 
 	user, err := l.userClient.Fetch(username)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	lastProcessedCommandID, err := l.commandClient.FetchLastID(username)
@@ -38,25 +38,15 @@ func (l *logic) Get(username string) ([]thread.Thread, *string, error) {
 		case *e.NoCommandFound:
 			break
 		default:
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 	}
 
-	if len(user.Threads) == 0 {
-		return []thread.Thread{}, lastProcessedCommandID, nil
-	}
+	// TODO(thomasmarlow): refactor so that the aggregation is not executed
+	//					   if there are no active threads
+	activeThreads, hiddenThreads, err := l.threadClient.FetchAll(username, user.ActiveThreads)
 
-	threads, err := l.threadClient.Fetch(user.Threads)
-	if err != nil {
-		switch err.(type) {
-		case *e.NoThreadsFound:
-			break
-		default:
-			return nil, nil, err
-		}
-	}
-
-	return threads, lastProcessedCommandID, nil
+	return activeThreads, hiddenThreads, lastProcessedCommandID, nil
 }
 
 func (l *logic) Update(username string, clientsideLastProcessedCommandID *string, commands []Command) (*string, error) {
@@ -88,6 +78,7 @@ func (l *logic) Update(username string, clientsideLastProcessedCommandID *string
 			"createThread":   getDecodeAndProcessFunction[PayloadCreateThread],
 			"editThreadName": getDecodeAndProcessFunction[PayloadEditThreadName],
 			"hideThread":     getDecodeAndProcessFunction[PayloadHideThread],
+			"showThread":     getDecodeAndProcessFunction[PayloadShowThread],
 			"relocateThread": getDecodeAndProcessFunction[PayloadRelocateThread],
 			"createKnot":     getDecodeAndProcessFunction[PayloadCreateKnot],
 			"editKnotBody":   getDecodeAndProcessFunction[PayloadEditKnotBody],
@@ -133,6 +124,10 @@ func (p PayloadEditThreadName) Process(l *logic, username string) error {
 
 func (p PayloadHideThread) Process(l *logic, username string) error {
 	return l.userClient.RemoveThread(username, p.ID)
+}
+
+func (p PayloadShowThread) Process(l *logic, username string) error {
+	return l.userClient.AddThread(username, p.ID)
 }
 
 func (p PayloadRelocateThread) Process(l *logic, username string) error {

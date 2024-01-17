@@ -31,9 +31,9 @@ func (c *client) Persist(username string, passwordHash []byte) error {
 	_, err := c.mongoCollection.InsertOne(
 		context.TODO(),
 		User{
-			Name:         username,
-			PasswordHash: passwordHash,
-			Threads:      []string{},
+			Name:          username,
+			PasswordHash:  passwordHash,
+			ActiveThreads: []string{},
 		},
 	)
 	if mongo.IsDuplicateKeyError(err) {
@@ -60,7 +60,7 @@ func (c *client) AddThread(username string, id string) error {
 		},
 		bson.M{
 			"$push": bson.M{
-				"threads": id,
+				"activeThreads": id,
 			},
 		},
 	)
@@ -78,7 +78,7 @@ func (c *client) RemoveThread(username string, id string) error {
 		},
 		bson.M{
 			"$pull": bson.M{
-				"threads": id,
+				"activeThreads": id,
 			},
 		},
 	)
@@ -95,8 +95,22 @@ func (c *client) RelocateThread(username string, id string, newIndex uint) error
 			"name": username,
 		},
 		bson.M{
+			"$pull": bson.M{
+				"activeThreads": id,
+			},
+		},
+	)
+	if errors.Is(result.Err(), mongo.ErrNoDocuments) {
+		return &e.UserNotFound{}
+	}
+
+	result = c.mongoCollection.FindOneAndUpdate(context.TODO(),
+		bson.M{
+			"name": username,
+		},
+		bson.M{
 			"$push": bson.M{
-				"threads": bson.M{
+				"activeThreads": bson.M{
 					"$each":     bson.A{id},
 					"$position": newIndex,
 				},

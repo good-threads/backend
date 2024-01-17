@@ -13,6 +13,7 @@ import (
 	boardLogic "github.com/good-threads/backend/internal/logic/board"
 	commonLogic "github.com/good-threads/backend/internal/logic/common"
 	sessionLogic "github.com/good-threads/backend/internal/logic/session"
+	threadLogic "github.com/good-threads/backend/internal/logic/thread"
 	userLogic "github.com/good-threads/backend/internal/logic/user"
 	httpPresentation "github.com/good-threads/backend/internal/presentation/http"
 
@@ -25,6 +26,7 @@ func main() {
 	env := config.Get()
 	mongoClient := mongoClient.Setup(env.MongoDBURI)
 	userClient := userClient.Setup(mongoClient)
+	threadClient := threadClient.Setup(mongoClient)
 	httpPresentation := httpPresentation.Setup(
 		commonLogic.Setup(),
 		userLogic.Setup(userClient),
@@ -39,9 +41,10 @@ func main() {
 			commandClient.Setup(
 				mongoClient,
 			),
-			threadClient.Setup(
-				mongoClient,
-			),
+			threadClient,
+		),
+		threadLogic.Setup(
+			threadClient,
 		),
 	)
 
@@ -57,6 +60,7 @@ func main() {
 
 	protected.Get("/", httpPresentation.GetBoard)
 	protected.Patch("/", httpPresentation.UpdateBoard)
+	protected.Get("/thread/{id}", httpPresentation.GetThread)
 
 	for _, s := range []string{
 		"   ┓           ┓ ",

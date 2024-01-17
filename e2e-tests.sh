@@ -45,7 +45,7 @@ curl http://localhost:8080/session -d '{"username":"tom","password":"pepe123"}' 
 # a 200 should be returned, with an empty board
 #
 # expected response body:
-# {"threads":[],"lastProcessedCommandID":null}
+# {"activeThreads":[],"hiddenThreads":[],"lastProcessedCommandID":null}
 curl http://localhost:8080/ -b cookies
 
 # patch board
@@ -160,5 +160,14 @@ curl http://localhost:8080/ -b cookies -X PATCH -d '{
 # a 200 should be returned, showing the new state of the board
 #
 # expected response body:
-# {"threads":[{"id":"t3","name":"the amazing thread","knots":[]},{"id":"t1","name":"the pepe thread","knots":[{"id":"k2","body":"the edit is real"},{"id":"k3","body":"the last knot"}]}],"lastProcessedCommandID":"c10"}
+# {"activeThreads":[{"id":"t3","name":"the amazing thread","knots":[]},{"id":"t1","name":"the pepe thread","knots":[{"id":"k2","body":"the edit is real"},{"id":"k3","body":"the last knot"}]}],"hiddenThreads":["t2"],"lastProcessedCommandID":"c10"}
 curl http://localhost:8080/ -b cookies
+
+# get thread
+#
+# as the request was made just fine,
+# a 200 should be returned, showing the hidden thread
+#
+# expected response body:
+# 
+curl http://localhost:8080/thread/t2 -b cookies

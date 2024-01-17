@@ -4,9 +4,9 @@ services:
   backend:
     image: good-threads-backend
     restart: always
-        # container_name: app_main
-        # command: sh -c "yarn install && yarn start"
-        # working_dir: /app
+    # container_name: app_main
+    # command: sh -c "yarn install && yarn start"
+    # working_dir: /app
     ports:
       - 8080:3000
     volumes:
