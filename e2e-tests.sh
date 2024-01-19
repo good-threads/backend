@@ -169,5 +169,5 @@ curl http://localhost:8080/ -b cookies
 # a 200 should be returned, showing the hidden thread
 #
 # expected response body:
-# 
+# {"id":"t2","name":"the pepest thread","knots":[]}
 curl http://localhost:8080/thread/t2 -b cookies

@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/good-threads/backend/internal/client/command"
+	"github.com/good-threads/backend/internal/client/metric"
 	"github.com/good-threads/backend/internal/client/thread"
 	"github.com/good-threads/backend/internal/client/user"
 	e "github.com/good-threads/backend/internal/errors"
@@ -19,10 +20,11 @@ type logic struct {
 	userClient    user.Client
 	commandClient command.Client
 	threadClient  thread.Client
+	metricClient  metric.Client
 }
 
-func Setup(userClient user.Client, commandClient command.Client, threadClient thread.Client) Logic {
-	return &logic{userClient: userClient, commandClient: commandClient, threadClient: threadClient}
+func Setup(userClient user.Client, commandClient command.Client, threadClient thread.Client, metricClient metric.Client) Logic {
+	return &logic{userClient: userClient, commandClient: commandClient, threadClient: threadClient, metricClient: metricClient}
 }
 
 func (l *logic) Get(username string) ([]thread.Thread, []string, *string, error) {
@@ -45,6 +47,11 @@ func (l *logic) Get(username string) ([]thread.Thread, []string, *string, error)
 	// TODO(thomasmarlow): refactor so that the aggregation is not executed
 	//					   if there are no active threads
 	activeThreads, hiddenThreads, err := l.threadClient.FetchAll(username, user.ActiveThreads)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	l.metricClient.RegisterBoardRead()
 
 	return activeThreads, hiddenThreads, lastProcessedCommandID, nil
 }
