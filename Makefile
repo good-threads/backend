@@ -31,7 +31,20 @@ cover:
 .PHONY: clean-db
 clean-db:
 	docker-compose down
+	sudo rm -fr ./.data/mongo
+	mkdir -p ./.data/mongo
+	sudo chown 999:999 ./.data/mongo
+
+.PHONY: clean-data
+clean-data:
+	docker-compose down
 	sudo rm -fr ./.data
+	mkdir -p ./.data/mongo
+	sudo chown 999:999 ./.data/mongo
+	mkdir -p ./.data/grafana
+	sudo chown 472:472 ./.data/grafana
+	mkdir -p ./.data/prometheus
+	sudo chown 65534:65534 ./.data/prometheus
 
 .PHONY: e2e-tests
 e2e-tests: clean-db from-scratch

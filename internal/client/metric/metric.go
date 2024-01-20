@@ -19,14 +19,14 @@ type client struct {
 
 func Setup() Client {
 	client := &client{
+		registry: prometheus.NewRegistry(),
 		boardReads: prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: "backend",
 			Name:      "board_reads",
 			Help:      "Number of times a board's state was read.",
 		}),
 	}
-	registry := prometheus.NewRegistry()
-	registry.MustRegister(client.boardReads)
+	client.registry.MustRegister(client.boardReads)
 	return client
 }
 

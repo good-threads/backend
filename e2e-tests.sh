@@ -10,7 +10,7 @@
 #
 # expected response body:
 # {"message":"Invalid session"}
-curl http://localhost:8080/ -b cookies
+curl http://localhost:8000/ -b cookies
 
 # create session
 #
@@ -19,7 +19,7 @@ curl http://localhost:8080/ -b cookies
 #
 # expected response body:
 # {"message":"Wrong credentials"}
-curl http://localhost:8080/session -d '{"username":"tom","password":"pepe123"}' -c cookies
+curl http://localhost:8000/session -d '{"username":"tom","password":"pepe123"}' -c cookies
 
 # create user
 #
@@ -28,7 +28,7 @@ curl http://localhost:8080/session -d '{"username":"tom","password":"pepe123"}' 
 #
 # expected response body:
 # {"message":"User created"}
-curl http://localhost:8080/user -d '{"username":"tom","password":"pepe123"}'
+curl http://localhost:8000/user -d '{"username":"tom","password":"pepe123"}'
 
 # create session
 #
@@ -37,7 +37,7 @@ curl http://localhost:8080/user -d '{"username":"tom","password":"pepe123"}'
 #
 # expected response body:
 # {"message":"Session created"}
-curl http://localhost:8080/session -d '{"username":"tom","password":"pepe123"}' -c cookies
+curl http://localhost:8000/session -d '{"username":"tom","password":"pepe123"}' -c cookies
 
 # get board
 #
@@ -46,7 +46,7 @@ curl http://localhost:8080/session -d '{"username":"tom","password":"pepe123"}' 
 #
 # expected response body:
 # {"activeThreads":[],"hiddenThreads":[],"lastProcessedCommandID":null}
-curl http://localhost:8080/ -b cookies
+curl http://localhost:8000/ -b cookies
 
 # patch board
 #
@@ -55,7 +55,7 @@ curl http://localhost:8080/ -b cookies
 #
 # expected response body:
 # {"lastProcessedCommandID":"c10"}
-curl http://localhost:8080/ -b cookies -X PATCH -d '{
+curl http://localhost:8000/ -b cookies -X PATCH -d '{
     "lastProcessedCommandID": null,
     "commands": [
         {
@@ -161,7 +161,7 @@ curl http://localhost:8080/ -b cookies -X PATCH -d '{
 #
 # expected response body:
 # {"activeThreads":[{"id":"t3","name":"the amazing thread","knots":[]},{"id":"t1","name":"the pepe thread","knots":[{"id":"k2","body":"the edit is real"},{"id":"k3","body":"the last knot"}]}],"hiddenThreads":["t2"],"lastProcessedCommandID":"c10"}
-curl http://localhost:8080/ -b cookies
+curl http://localhost:8000/ -b cookies
 
 # get thread
 #
@@ -170,4 +170,4 @@ curl http://localhost:8080/ -b cookies
 #
 # expected response body:
 # {"id":"t2","name":"the pepest thread","knots":[]}
-curl http://localhost:8080/thread/t2 -b cookies
+curl http://localhost:8000/thread/t2 -b cookies
