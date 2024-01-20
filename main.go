@@ -53,6 +53,7 @@ func main() {
 
 	public := chi.NewRouter()
 	public.Use(middleware.Logger)
+	public.Use(metricClient.Middleware)
 
 	public.Get("/ping", httpPresentation.Ping)
 	public.Handle("/metrics", metricClient.GetHandler())
