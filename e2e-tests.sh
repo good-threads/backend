@@ -1,5 +1,5 @@
 # this basic test script / request list can be used as a means to understand
-# the way the API works. it's meant to be read from top to bottom,
+# the way the API works. it's meant to be read from top to botseba,
 # as the requests are ordered in a way that shows how the state of the
 # application evolves.
 
@@ -19,7 +19,7 @@ curl http://localhost:8000/ -b cookies
 #
 # expected response body:
 # {"message":"Wrong credentials"}
-curl http://localhost:8000/session -d '{"username":"tom","password":"pepe123"}' -c cookies
+curl http://localhost:8000/session -d '{"username":"seba","password":"pepeasdasd"}' -c cookies
 
 # create user
 #
@@ -28,7 +28,7 @@ curl http://localhost:8000/session -d '{"username":"tom","password":"pepe123"}' 
 #
 # expected response body:
 # {"message":"User created"}
-curl http://localhost:8000/user -d '{"username":"tom","password":"pepe123"}'
+curl http://localhost:8000/user -d '{"username":"seba","password":"pepe123"}'
 
 # create session
 #
@@ -37,7 +37,7 @@ curl http://localhost:8000/user -d '{"username":"tom","password":"pepe123"}'
 #
 # expected response body:
 # {"message":"Session created"}
-curl http://localhost:8000/session -d '{"username":"tom","password":"pepe123"}' -c cookies
+curl http://localhost:8000/session -d '{"username":"seba","password":"pepe123"}' -c cookies
 
 # get board
 #

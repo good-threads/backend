@@ -4,10 +4,13 @@ FROM golang:1.21
 
 WORKDIR /app 
 
-COPY go.mod go.sum main.go ./
-COPY internal ./internal
+COPY go.mod go.sum ./
 
-RUN go mod download            
+RUN go mod download
+
+COPY main.go ./
+
+COPY internal ./internal      
 
 RUN CGO_ENABLED=0 GOOS=linux go build -o /good-threads-backend
 

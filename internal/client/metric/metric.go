@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -27,7 +28,7 @@ func Setup() Client {
 				Name:      "http_requests",
 				Help:      "Number of HTTP requests.",
 			},
-			[]string{"method", "route", "status"},
+			[]string{"method", "route", "status", "action"},
 		),
 		"boardReads": prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: "backend",
@@ -55,7 +56,7 @@ func (c *client) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		wrapped := &statusCapturingResponseWriter{ResponseWriter: w}
 		next.ServeHTTP(wrapped, r)
-		c.collectors["requests"].(*prometheus.CounterVec).WithLabelValues(r.Method, r.URL.Path, fmt.Sprint(wrapped.status)).Inc()
+		c.collectors["requests"].(*prometheus.CounterVec).WithLabelValues(r.Method, r.URL.Path, fmt.Sprint(wrapped.status), getRoutePattern(r)).Inc()
 	})
 }
 
@@ -67,6 +68,13 @@ type statusCapturingResponseWriter struct {
 func (w *statusCapturingResponseWriter) WriteHeader(code int) {
 	w.status = code
 	w.ResponseWriter.WriteHeader(code)
+}
+
+func getRoutePattern(r *http.Request) string {
+	if pattern := chi.RouteContext(r.Context()).RoutePattern(); pattern != "" {
+		return pattern
+	}
+	return r.URL.Path
 }
 
 func (c *client) RegisterBoardRead() {
