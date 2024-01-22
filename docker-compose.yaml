@@ -11,6 +11,16 @@ services:
       - 8000:3000
     volumes:
       - ./.env:/app/.env:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/ping"]
+      # start_period: 15s
+      # start_interval: 3s
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    depends_on:
+      mongo:
+        condition: service_healthy
 
   mongo:
     image: mongo:4.4.26
@@ -21,6 +31,13 @@ services:
     volumes:
       - ./.data/mongo:/data/db:rw
       - ./mongo-init-script.js:/docker-entrypoint-initdb.d/mongo-init-script.js:ro
+    healthcheck:
+      test: 'echo "db.stats().ok" | mongo localhost:27017/test --quiet'
+      # start_period: 15s
+      # start_interval: 3s
+      interval: 10s
+      timeout: 10s
+      retries: 5
 
   mongo-express:
     image: mongo-express
@@ -31,14 +48,17 @@ services:
       ME_CONFIG_MONGODB_ADMINUSERNAME: root
       ME_CONFIG_MONGODB_ADMINPASSWORD: example  
       ME_CONFIG_MONGODB_URL: mongodb://root:example@mongo:27017/
+    depends_on:
+      mongo:
+        condition: service_healthy
 
-  prometheus:
-    image: prom/prometheus
-    ports:
-      - 9002:9090
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./.data/prometheus:/prometheus:rw
+  # prometheus:
+  #   image: prom/prometheus
+  #   ports:
+  #     - 9002:9090
+  #   volumes:
+  #     - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+  #     - ./.data/prometheus:/prometheus:rw
 
   grafana:
     image: grafana/grafana
@@ -50,3 +70,28 @@ services:
     volumes:
       - ./grafana.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
       - ./.data/grafana:/var/lib/grafana:rw
+    depends_on:
+      victoriametrics:
+        condition: service_started
+
+  victoriametrics:
+    image: victoriametrics/victoria-metrics
+    ports:
+      - 9004:8428
+    volumes:
+      - ./prometheus.yml:/promscrape-config/prometheus.yml:ro
+      - ./.data/victoriametrics:/victoria-metrics-data:rw
+    command: 
+      - "-promscrape.config=/promscrape-config/prometheus.yml"
+      - "-promscrape.config.strictParse=false"
+      - "-storageDataPath=/victoria-metrics-data"
+    # healthcheck: # TODO(thomasmarlow): image doesn't include curl
+    #   test: ["CMD", "curl", "-f", "http://localhost:8428/-/healthy"]
+    #   # start_period: 15s
+    #   # start_interval: 3s
+    #   interval: 10s
+    #   timeout: 10s
+    #   retries: 5
+    depends_on:
+      backend:
+        condition: service_healthy

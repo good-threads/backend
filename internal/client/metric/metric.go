@@ -22,13 +22,13 @@ type client struct {
 
 func Setup() Client {
 	collectors := map[string]prometheus.Collector{
-		"requests": prometheus.NewCounterVec(
+		"responses": prometheus.NewCounterVec(
 			prometheus.CounterOpts{
 				Namespace: "backend",
-				Name:      "http_requests",
-				Help:      "Number of HTTP requests.",
+				Name:      "http_responses",
+				Help:      "Number of HTTP responses.",
 			},
-			[]string{"method", "route", "status", "action"},
+			[]string{"method", "route", "status"},
 		),
 		"boardReads": prometheus.NewCounter(prometheus.CounterOpts{
 			Namespace: "backend",
@@ -56,7 +56,7 @@ func (c *client) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		wrapped := &statusCapturingResponseWriter{ResponseWriter: w}
 		next.ServeHTTP(wrapped, r)
-		c.collectors["requests"].(*prometheus.CounterVec).WithLabelValues(r.Method, r.URL.Path, fmt.Sprint(wrapped.status), getRoutePattern(r)).Inc()
+		c.collectors["responses"].(*prometheus.CounterVec).WithLabelValues(r.Method, getRoutePattern(r), fmt.Sprint(wrapped.status)).Inc()
 	})
 }
 

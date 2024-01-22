@@ -43,10 +43,8 @@ clean-data:
 	sudo chown 999:999 ./.data/mongo
 	mkdir -p ./.data/grafana
 	sudo chown 472:472 ./.data/grafana
-	mkdir -p ./.data/prometheus
-	sudo chown 65534:65534 ./.data/prometheus
 
 .PHONY: e2e-tests
-e2e-tests: clean-db from-scratch
+e2e-tests:
 	sleep 3
 	bash -x e2e-tests.sh
