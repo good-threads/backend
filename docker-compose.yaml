@@ -73,6 +73,8 @@ services:
     depends_on:
       victoriametrics:
         condition: service_healthy
+      loki:
+        condition: service_started
 
   victoriametrics:
     image: victoriametrics/victoria-metrics
@@ -95,3 +97,25 @@ services:
     depends_on:
       backend:
         condition: service_healthy
+
+  loki:
+    image: grafana/loki
+    volumes:
+      - ./.data/loki:/etc/loki:rw
+      - ./loki.yml:/etc/loki/loki-config.yml
+    ports:
+      - 9005:3100
+    restart: always
+    command: -config.file=/etc/loki/loki-config.yml
+
+  promtail:
+    image: grafana/promtail
+    volumes:
+      - /var/log:/var/log:ro
+      - ./.data/promtail:/etc/promtail:rw
+      - ./promtail.yml:/etc/promtail/promtail-config.yml:ro
+    restart: always
+    command: -config.file=/etc/promtail/promtail-config.yml
+    depends_on:
+      loki:
+        condition: service_started

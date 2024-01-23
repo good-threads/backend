@@ -16,3 +16,8 @@ datasources:
   editable: true
   jsonData:
     timeInterval: 15s
+- name: MainLogs
+  type: loki
+  url: http://loki:3100
+  readOnly: false
+  editable: true

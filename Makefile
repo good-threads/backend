@@ -48,3 +48,16 @@ clean-data:
 e2e-tests:
 	sleep 3
 	bash -x e2e-tests.sh
+
+.PHONY: setup
+setup:
+	docker plugin install grafana/loki-docker-driver:latest --alias loki --grant-all-permissions || true
+	docker plugin ls
+	sleep 3
+	echo '{"log-driver": "loki", "log-opts": {"loki-url": "http://localhost:9005/loki/api/v1/push", "loki-batch-size": "400", "loki-retries": "2", "loki-max-backoff": "800ms", "loki-timeout": "1s", "keep-file": "true"}}' > /tmp/daemon.json
+	sudo mv /tmp/daemon.json /etc/docker/daemon.json
+	sudo systemctl restart docker
+
+.PHONY: tom
+tom:
+	echo "/etc/docker/daemon.json.bk-$$(date --rfc-3339=ns | sed -e 's/ /T/' | sed -e 's/:/-/g')"
