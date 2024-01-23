@@ -72,7 +72,7 @@ services:
       - ./.data/grafana:/var/lib/grafana:rw
     depends_on:
       victoriametrics:
-        condition: service_started
+        condition: service_healthy
 
   victoriametrics:
     image: victoriametrics/victoria-metrics
@@ -85,13 +85,13 @@ services:
       - "-promscrape.config=/promscrape-config/prometheus.yml"
       - "-promscrape.config.strictParse=false"
       - "-storageDataPath=/victoria-metrics-data"
-    # healthcheck: # TODO(thomasmarlow): image doesn't include curl
-    #   test: ["CMD", "curl", "-f", "http://localhost:8428/-/healthy"]
-    #   # start_period: 15s
-    #   # start_interval: 3s
-    #   interval: 10s
-    #   timeout: 10s
-    #   retries: 5
+    healthcheck:
+      test: 'echo -e "GET /-/healthy HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" | nc localhost 8428'
+      # start_period: 15s
+      # start_interval: 3s
+      interval: 10s
+      timeout: 10s
+      retries: 5
     depends_on:
       backend:
         condition: service_healthy

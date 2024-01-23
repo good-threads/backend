@@ -39,6 +39,7 @@ func Setup(common common.Logic, user user.Logic, session session.Logic, board bo
 
 func (p *presentation) Ping(w http.ResponseWriter, r *http.Request) {
 	result := p.common.Ping()
+	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(result))
 }
 
