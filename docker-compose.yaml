@@ -31,9 +31,9 @@ services:
     command: "--replSet rs0 --keyFile /mongo-keyfile"
     volumes:
       - ./.data/mongo:/data/db:rw
-      - ./mongo-init-script.js:/docker-entrypoint-initdb.d/mongo-init-script.js:ro
-      - ./mongo-keyfile:/mongo-keyfile:ro
-      - ./mongo.conf:/etc/mongod.conf:ro
+      - ./static-mounted/mongo-init-script.js:/docker-entrypoint-initdb.d/mongo-init-script.js:ro
+      - ./static-mounted/mongo-keyfile:/mongo-keyfile:ro
+      - ./static-mounted/mongo.conf:/etc/mongod.conf:ro
     healthcheck:
       test: 'echo "db.stats().ok" | mongo localhost:27017/test --quiet'
       # start_period: 15s
@@ -60,7 +60,7 @@ services:
   #   ports:
   #     - 9002:9090
   #   volumes:
-  #     - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+  #     - ./static-mounted/prometheus.yml:/etc/prometheus/prometheus.yml:ro
   #     - ./.data/prometheus:/prometheus:rw
 
   grafana:
@@ -71,7 +71,7 @@ services:
       GF_SECURITY_ADMIN_USER: root
       GF_SECURITY_ADMIN_PASSWORD: example
     volumes:
-      - ./grafana.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+      - ./static-mounted/grafana.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
       - ./.data/grafana:/var/lib/grafana:rw
     depends_on:
       victoriametrics:
@@ -84,7 +84,7 @@ services:
     ports:
       - 9004:8428
     volumes:
-      - ./prometheus.yml:/promscrape-config/prometheus.yml:ro
+      - ./static-mounted/prometheus.yml:/promscrape-config/prometheus.yml:ro
       - ./.data/victoriametrics:/victoria-metrics-data:rw
     command: 
       - "-promscrape.config=/promscrape-config/prometheus.yml"
@@ -105,7 +105,7 @@ services:
     image: grafana/loki
     volumes:
       - ./.data/loki:/etc/loki:rw
-      - ./loki.yml:/etc/loki/loki-config.yml
+      - ./static-mounted/loki.yml:/etc/loki/loki-config.yml
     ports:
       - 9005:3100
     restart: always
@@ -116,7 +116,7 @@ services:
     volumes:
       - /var/log:/var/log:ro
       - ./.data/promtail:/etc/promtail:rw
-      - ./promtail.yml:/etc/promtail/promtail-config.yml:ro
+      - ./static-mounted/promtail.yml:/etc/promtail/promtail-config.yml:ro
     restart: always
     command: -config.file=/etc/promtail/promtail-config.yml
     depends_on:

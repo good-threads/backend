@@ -52,9 +52,10 @@ e2e-tests:
 	sleep 3
 	bash -x e2e-tests.sh
 
-.PHONY: setup-config-permissions
-setup-file-permissions:
-	sudo chmod 999:999 ./mongo-keyfile
+.PHONY: setup-config-ownership
+setup-config-ownership:
+	sudo chown 999:999 ./static-mounted/mongo-keyfile
+	sudo chmod 400 ./static-mounted/mongo-keyfile
 
 .PHONY: setup-logging
 setup:
@@ -67,5 +68,5 @@ setup:
 
 .PHONY: git-add-all
 git-add-all:
-	sudo chown $$(whoami) ./mongo-keyfile
+	sudo chown $$(whoami) ./static-mounted/mongo-keyfile
 	git add .
