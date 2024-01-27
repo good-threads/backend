@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	mongoClient "github.com/good-threads/backend/internal/client/mongo"
 	e "github.com/good-threads/backend/internal/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -11,11 +12,11 @@ import (
 
 type Client interface {
 	FetchAll(username string, ids []string) ([]Thread, []string, error)
-	Create(username string, id string, name string) error
-	EditName(username string, id string, name string) error
-	AddKnot(username string, threadID string, knotID string, knotBody string) error
-	EditKnotBody(username string, threadID string, knotID string, knotBody string) error
-	DeleteKnot(username string, threadID string, knotID string) error
+	Create(transaction mongoClient.Transaction, username string, id string, name string) error
+	EditName(transaction mongoClient.Transaction, username string, id string, name string) error
+	AddKnot(transaction mongoClient.Transaction, username string, threadID string, knotID string, knotBody string) error
+	EditKnotBody(transaction mongoClient.Transaction, username string, threadID string, knotID string, knotBody string) error
+	DeleteKnot(transaction mongoClient.Transaction, username string, threadID string, knotID string) error
 	FetchOne(username string, id string) (*Thread, error)
 }
 
@@ -23,9 +24,9 @@ type client struct {
 	mongoCollection *mongo.Collection
 }
 
-func Setup(mongoClient *mongo.Client) Client {
+func Setup(mongoClient mongoClient.Client) Client {
 	return &client{
-		mongoCollection: mongoClient.Database("goodthreads").Collection("threads"),
+		mongoCollection: mongoClient.MongoClient().Database("goodthreads").Collection("threads"),
 	}
 }
 
@@ -72,8 +73,8 @@ func (c *client) FetchAll(username string, ids []string) ([]Thread, []string, er
 	return activeThreads, hiddenThreadIDs, err
 }
 
-func (c *client) Create(username string, id string, name string) error {
-	_, err := c.mongoCollection.InsertOne(context.TODO(), Thread{
+func (c *client) Create(transaction mongoClient.Transaction, username string, id string, name string) error {
+	_, err := c.mongoCollection.InsertOne(transaction, Thread{
 		ID:       id,
 		Name:     name,
 		Username: username,
@@ -85,8 +86,8 @@ func (c *client) Create(username string, id string, name string) error {
 	return err
 }
 
-func (c *client) EditName(username string, id string, name string) error {
-	result := c.mongoCollection.FindOneAndUpdate(context.TODO(),
+func (c *client) EditName(transaction mongoClient.Transaction, username string, id string, name string) error {
+	result := c.mongoCollection.FindOneAndUpdate(transaction,
 		bson.M{
 			"username": username,
 			"id":       id,
@@ -103,12 +104,12 @@ func (c *client) EditName(username string, id string, name string) error {
 	return result.Err()
 }
 
-func (c *client) AddKnot(username string, threadID string, knotID string, knotBody string) error {
+func (c *client) AddKnot(transaction mongoClient.Transaction, username string, threadID string, knotID string, knotBody string) error {
 	filter := bson.M{
 		"username": username,
 		"id":       threadID,
 	}
-	result := c.mongoCollection.FindOneAndUpdate(context.TODO(),
+	result := c.mongoCollection.FindOneAndUpdate(transaction,
 		filter,
 		bson.M{
 			"$push": bson.M{
@@ -125,8 +126,8 @@ func (c *client) AddKnot(username string, threadID string, knotID string, knotBo
 	return result.Err()
 }
 
-func (c *client) EditKnotBody(username string, threadID string, knotID string, knotBody string) error {
-	result := c.mongoCollection.FindOneAndUpdate(context.TODO(),
+func (c *client) EditKnotBody(transaction mongoClient.Transaction, username string, threadID string, knotID string, knotBody string) error {
+	result := c.mongoCollection.FindOneAndUpdate(transaction,
 		bson.M{
 			"username": username,
 			"id":       threadID,
@@ -144,8 +145,8 @@ func (c *client) EditKnotBody(username string, threadID string, knotID string, k
 	return result.Err()
 }
 
-func (c *client) DeleteKnot(username string, threadID string, knotID string) error {
-	result := c.mongoCollection.FindOneAndUpdate(context.TODO(),
+func (c *client) DeleteKnot(transaction mongoClient.Transaction, username string, threadID string, knotID string) error {
+	result := c.mongoCollection.FindOneAndUpdate(transaction,
 		bson.M{
 			"username": username,
 			"id":       threadID,

@@ -1,6 +1,7 @@
 package user
 
 import (
+	mongoClient "github.com/good-threads/backend/internal/client/mongo"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -18,17 +19,17 @@ func (m *MockClient) Fetch(username string) (*User, error) {
 	return args.Get(0).(*User), args.Error(1)
 }
 
-func (m *MockClient) AddThread(username string, id string) error {
-	args := m.Called(username, id)
+func (m *MockClient) AddThread(transaction mongoClient.Transaction, username string, id string) error {
+	args := m.Called(transaction, username, id)
 	return args.Error(0)
 }
 
-func (m *MockClient) RemoveThread(username string, id string) error {
-	args := m.Called(username, id)
+func (m *MockClient) RemoveThread(transaction mongoClient.Transaction, username string, id string) error {
+	args := m.Called(transaction, username, id)
 	return args.Error(0)
 }
 
-func (m *MockClient) RelocateThread(username string, id string, newIndex uint) error {
-	args := m.Called(username, id, newIndex)
+func (m *MockClient) RelocateThread(transaction mongoClient.Transaction, username string, id string, newIndex uint) error {
+	args := m.Called(transaction, username, id, newIndex)
 	return args.Error(0)
 }

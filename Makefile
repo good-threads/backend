@@ -11,6 +11,9 @@ test-and-build:
 .PHONY: deploy
 deploy:
 	docker-compose down
+	docker-compose up -d mongo
+	sleep 3
+	docker exec -it backend_mongo_1 mongo mongodb://root:example@localhost:27017 --eval 'rs.initiate()'
 	docker-compose up -d
 
 .PHONY: logs
@@ -49,7 +52,11 @@ e2e-tests:
 	sleep 3
 	bash -x e2e-tests.sh
 
-.PHONY: setup
+.PHONY: setup-config-permissions
+setup-file-permissions:
+	sudo chmod 999:999 ./mongo-keyfile
+
+.PHONY: setup-logging
 setup:
 	docker plugin install grafana/loki-docker-driver:latest --alias loki --grant-all-permissions || true
 	docker plugin ls
@@ -58,6 +65,7 @@ setup:
 	sudo mv /tmp/daemon.json /etc/docker/daemon.json
 	sudo systemctl restart docker
 
-.PHONY: tom
-tom:
-	echo "/etc/docker/daemon.json.bk-$$(date --rfc-3339=ns | sed -e 's/ /T/' | sed -e 's/:/-/g')"
+.PHONY: git-add-all
+git-add-all:
+	sudo chown $$(whoami) ./mongo-keyfile
+	git add .

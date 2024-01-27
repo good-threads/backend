@@ -20,9 +20,9 @@ type client struct {
 	mongoCollection *mongo.Collection
 }
 
-func Setup(mongoClient *mongo.Client) Client {
+func Setup(mongoClient mongoClient.Client) Client {
 	return &client{
-		mongoCollection: mongoClient.Database("goodthreads").Collection("sessions"),
+		mongoCollection: mongoClient.MongoClient().Database("goodthreads").Collection("sessions"),
 	}
 }
 

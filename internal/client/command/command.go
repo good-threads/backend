@@ -13,16 +13,16 @@ import (
 
 type Client interface {
 	FetchLastID(username string) (*string, error)
-	RegisterProcessed(username string, id string) error
+	RegisterProcessed(transaction mongoClient.Transaction, username string, id string) error
 }
 
 type client struct {
 	mongoCollection *mongo.Collection
 }
 
-func Setup(mongoClient *mongo.Client) Client {
+func Setup(mongoClient mongoClient.Client) Client {
 	return &client{
-		mongoCollection: mongoClient.Database("goodthreads").Collection("processed_commands"),
+		mongoCollection: mongoClient.MongoClient().Database("goodthreads").Collection("processed_commands"),
 	}
 }
 
@@ -41,9 +41,9 @@ func (c *client) FetchLastID(username string) (*string, error) {
 	return &command.ID, nil
 }
 
-func (c *client) RegisterProcessed(username string, id string) error {
+func (c *client) RegisterProcessed(transaction mongoClient.Transaction, username string, id string) error {
 	_, err := c.mongoCollection.InsertOne(
-		context.TODO(),
+		transaction,
 		Command{
 			ID:       id, // TODO(thomasmarlow): unique index
 			Username: username,

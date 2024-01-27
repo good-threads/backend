@@ -45,6 +45,7 @@ func main() {
 			),
 			threadClient,
 			metricClient,
+			mongoClient,
 		),
 		threadLogic.Setup(
 			threadClient,

@@ -5,6 +5,7 @@ import (
 
 	"github.com/good-threads/backend/internal/client/command"
 	"github.com/good-threads/backend/internal/client/metric"
+	"github.com/good-threads/backend/internal/client/mongo"
 	"github.com/good-threads/backend/internal/client/thread"
 	"github.com/good-threads/backend/internal/client/user"
 	e "github.com/good-threads/backend/internal/errors"
@@ -21,10 +22,11 @@ type logic struct {
 	commandClient command.Client
 	threadClient  thread.Client
 	metricClient  metric.Client
+	mongoClient   mongo.Client
 }
 
-func Setup(userClient user.Client, commandClient command.Client, threadClient thread.Client, metricClient metric.Client) Logic {
-	return &logic{userClient: userClient, commandClient: commandClient, threadClient: threadClient, metricClient: metricClient}
+func Setup(userClient user.Client, commandClient command.Client, threadClient thread.Client, metricClient metric.Client, mongoClient mongo.Client) Logic {
+	return &logic{userClient: userClient, commandClient: commandClient, threadClient: threadClient, metricClient: metricClient, mongoClient: mongoClient}
 }
 
 func (l *logic) Get(username string) ([]thread.Thread, []string, *string, error) {
@@ -81,7 +83,7 @@ func (l *logic) Update(username string, clientsideLastProcessedCommandID *string
 	}
 
 	for _, command := range commands {
-		decodeAndProcess, validCommandType := map[string]func(*logic, string, any) error{
+		decodeAndProcess, validCommandType := map[string]func(mongo.Transaction, *logic, string, any) error{
 			"createThread":   getDecodeAndProcessFunction[PayloadCreateThread],
 			"editThreadName": getDecodeAndProcessFunction[PayloadEditThreadName],
 			"hideThread":     getDecodeAndProcessFunction[PayloadHideThread],
@@ -94,10 +96,12 @@ func (l *logic) Update(username string, clientsideLastProcessedCommandID *string
 		if !validCommandType {
 			return serversideLastProcessedCommandID, errors.New("shouldn't happen (TODO(thomasmarlow))")
 		}
-		if err := decodeAndProcess(l, username, command.Payload); err != nil {
-			return serversideLastProcessedCommandID, err
-		}
-		if err := l.commandClient.RegisterProcessed(username, command.ID); err != nil {
+		if err := l.mongoClient.Transactionally(func(transaction mongo.Transaction) error {
+			if err := decodeAndProcess(transaction, l, username, command.Payload); err != nil {
+				return err
+			}
+			return l.commandClient.RegisterProcessed(transaction, username, command.ID)
+		}); err != nil {
 			return serversideLastProcessedCommandID, err
 		}
 		serversideLastProcessedCommandID = &command.ID
@@ -106,49 +110,49 @@ func (l *logic) Update(username string, clientsideLastProcessedCommandID *string
 	return serversideLastProcessedCommandID, nil
 }
 
-func getDecodeAndProcessFunction[Payload Processable](l *logic, username string, undecodedPayload any) error {
+func getDecodeAndProcessFunction[Payload Processable](transaction mongo.Transaction, l *logic, username string, undecodedPayload any) error {
 	var payload Payload
 	if err := mapstructure.Decode(undecodedPayload, &payload); err != nil {
 		return &e.BadPayload{}
 	}
-	return payload.Process(l, username)
+	return payload.Process(transaction, l, username)
 }
 
 type Processable interface {
-	Process(l *logic, username string) error
+	Process(transaction mongo.Transaction, l *logic, username string) error
 }
 
-func (p PayloadCreateThread) Process(l *logic, username string) error {
-	if err := l.threadClient.Create(username, p.ID, p.Name); err != nil {
+func (p PayloadCreateThread) Process(transaction mongo.Transaction, l *logic, username string) error {
+	if err := l.threadClient.Create(transaction, username, p.ID, p.Name); err != nil {
 		return err
 	}
-	return l.userClient.AddThread(username, p.ID)
+	return l.userClient.AddThread(transaction, username, p.ID)
 }
 
-func (p PayloadEditThreadName) Process(l *logic, username string) error {
-	return l.threadClient.EditName(username, p.ID, p.Name)
+func (p PayloadEditThreadName) Process(transaction mongo.Transaction, l *logic, username string) error {
+	return l.threadClient.EditName(transaction, username, p.ID, p.Name)
 }
 
-func (p PayloadHideThread) Process(l *logic, username string) error {
-	return l.userClient.RemoveThread(username, p.ID)
+func (p PayloadHideThread) Process(transaction mongo.Transaction, l *logic, username string) error {
+	return l.userClient.RemoveThread(transaction, username, p.ID)
 }
 
-func (p PayloadShowThread) Process(l *logic, username string) error {
-	return l.userClient.AddThread(username, p.ID)
+func (p PayloadShowThread) Process(transaction mongo.Transaction, l *logic, username string) error {
+	return l.userClient.AddThread(transaction, username, p.ID)
 }
 
-func (p PayloadRelocateThread) Process(l *logic, username string) error {
-	return l.userClient.RelocateThread(username, p.ID, p.NewIndex)
+func (p PayloadRelocateThread) Process(transaction mongo.Transaction, l *logic, username string) error {
+	return l.userClient.RelocateThread(transaction, username, p.ID, p.NewIndex)
 }
 
-func (p PayloadCreateKnot) Process(l *logic, username string) error {
-	return l.threadClient.AddKnot(username, p.ThreadID, p.KnotID, p.KnotBody)
+func (p PayloadCreateKnot) Process(transaction mongo.Transaction, l *logic, username string) error {
+	return l.threadClient.AddKnot(transaction, username, p.ThreadID, p.KnotID, p.KnotBody)
 }
 
-func (p PayloadEditKnotBody) Process(l *logic, username string) error {
-	return l.threadClient.EditKnotBody(username, p.ThreadID, p.KnotID, p.KnotBody)
+func (p PayloadEditKnotBody) Process(transaction mongo.Transaction, l *logic, username string) error {
+	return l.threadClient.EditKnotBody(transaction, username, p.ThreadID, p.KnotID, p.KnotBody)
 }
 
-func (p PayloadDeleteKnot) Process(l *logic, username string) error {
-	return l.threadClient.DeleteKnot(username, p.ThreadID, p.KnotID)
+func (p PayloadDeleteKnot) Process(transaction mongo.Transaction, l *logic, username string) error {
+	return l.threadClient.DeleteKnot(transaction, username, p.ThreadID, p.KnotID)
 }

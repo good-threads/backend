@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	mongoClient "github.com/good-threads/backend/internal/client/mongo"
 	e "github.com/good-threads/backend/internal/errors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -12,18 +13,18 @@ import (
 type Client interface {
 	Persist(username string, passwordHash []byte) error
 	Fetch(username string) (*User, error)
-	AddThread(username string, id string) error
-	RemoveThread(username string, id string) error
-	RelocateThread(username string, id string, newIndex uint) error
+	AddThread(transaction mongoClient.Transaction, username string, id string) error
+	RemoveThread(transaction mongoClient.Transaction, username string, id string) error
+	RelocateThread(transaction mongoClient.Transaction, username string, id string, newIndex uint) error
 }
 
 type client struct {
 	mongoCollection *mongo.Collection
 }
 
-func Setup(mongoClient *mongo.Client) Client {
+func Setup(mongoClient mongoClient.Client) Client {
 	return &client{
-		mongoCollection: mongoClient.Database("goodthreads").Collection("users"),
+		mongoCollection: mongoClient.MongoClient().Database("goodthreads").Collection("users"),
 	}
 }
 
@@ -53,8 +54,8 @@ func (c *client) Fetch(username string) (*User, error) {
 	return &user, nil
 }
 
-func (c *client) AddThread(username string, id string) error {
-	result := c.mongoCollection.FindOneAndUpdate(context.TODO(),
+func (c *client) AddThread(transaction mongoClient.Transaction, username string, id string) error {
+	result := c.mongoCollection.FindOneAndUpdate(transaction,
 		bson.M{
 			"name": username,
 		},
@@ -70,9 +71,9 @@ func (c *client) AddThread(username string, id string) error {
 	return result.Err()
 }
 
-func (c *client) RemoveThread(username string, id string) error {
+func (c *client) RemoveThread(transaction mongoClient.Transaction, username string, id string) error {
 
-	result := c.mongoCollection.FindOneAndUpdate(context.TODO(),
+	result := c.mongoCollection.FindOneAndUpdate(transaction,
 		bson.M{
 			"name": username,
 		},
@@ -88,9 +89,9 @@ func (c *client) RemoveThread(username string, id string) error {
 	return result.Err()
 }
 
-func (c *client) RelocateThread(username string, id string, newIndex uint) error {
+func (c *client) RelocateThread(transaction mongoClient.Transaction, username string, id string, newIndex uint) error {
 
-	result := c.mongoCollection.FindOneAndUpdate(context.TODO(),
+	result := c.mongoCollection.FindOneAndUpdate(transaction,
 		bson.M{
 			"name": username,
 		},
@@ -104,7 +105,7 @@ func (c *client) RelocateThread(username string, id string, newIndex uint) error
 		return &e.UserNotFound{}
 	}
 
-	result = c.mongoCollection.FindOneAndUpdate(context.TODO(),
+	result = c.mongoCollection.FindOneAndUpdate(transaction,
 		bson.M{
 			"name": username,
 		},
