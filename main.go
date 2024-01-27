@@ -25,24 +25,26 @@ import (
 func main() {
 
 	env := config.Get()
+
 	metricClient := metricClient.Setup()
 	mongoClient := mongoClient.Setup(env.MongoDBURI)
 	userClient := userClient.Setup(mongoClient)
 	threadClient := threadClient.Setup(mongoClient)
+	sessionClient := sessionClient.Setup(mongoClient)
+	commandClient := commandClient.Setup(mongoClient)
+
 	httpPresentation := httpPresentation.Setup(
 		commonLogic.Setup(),
-		userLogic.Setup(userClient),
+		userLogic.Setup(
+			userClient,
+		),
 		sessionLogic.Setup(
-			sessionClient.Setup(
-				mongoClient,
-			),
+			sessionClient,
 			userClient,
 		),
 		boardLogic.Setup(
 			userClient,
-			commandClient.Setup(
-				mongoClient,
-			),
+			commandClient,
 			threadClient,
 			metricClient,
 			mongoClient,

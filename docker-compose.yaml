@@ -33,7 +33,6 @@ services:
       - ./.data/mongo:/data/db:rw
       - ./static-mounted/mongo-init-script.js:/docker-entrypoint-initdb.d/mongo-init-script.js:ro
       - ./static-mounted/mongo-keyfile:/mongo-keyfile:ro
-      - ./static-mounted/mongo.conf:/etc/mongod.conf:ro
     healthcheck:
       test: 'echo "db.stats().ok" | mongo localhost:27017/test --quiet'
       # start_period: 15s

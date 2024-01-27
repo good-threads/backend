@@ -26,8 +26,8 @@ from-scratch: test-and-build deploy
 .PHONY: cover
 cover:
 	bash create-missing-tests.sh
-	go test ./... -coverprofile=cover.out -covermode=count # TODO(thomasmarlow): i think there is a flag that makes the next line unnecessary
-	bash remove-lines-containing-token.sh cover.out _mock.go
+	go test ./... -coverprofile=cover.out -covermode=count
+	bash remove-lines-containing-token.sh cover.out _mock.go # TODO(thomasmarlow): there must a way to go without this line
 	go tool cover -html=cover.out -o cover.html
 	firefox cover.html
 
