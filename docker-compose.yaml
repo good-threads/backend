@@ -29,7 +29,6 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
     command: "--replSet rs0 --keyFile /mongo-keyfile"
-    # command: "--keyFile /mongo-keyfile"
     volumes:
       - ./.data/mongo:/data/db:rw
       - ./mongo-init-script.js:/docker-entrypoint-initdb.d/mongo-init-script.js:ro
