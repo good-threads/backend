@@ -150,6 +150,15 @@ curl http://localhost:8000/ -b cookies -X PATCH -d '{
                 "knotID": "k3",
                 "knotBody": "the last knot"
             }
+        },
+        {
+            "id": "c11",
+            "datetime": "'"$(date --rfc-3339=seconds | sed -e 's/ /T/')"'",
+            "type": "editThreadName",
+            "payload": {
+                "id": "t1",
+                "name": "the pepe thread EDIT"
+            }
         }
     ]
 }'
@@ -160,7 +169,7 @@ curl http://localhost:8000/ -b cookies -X PATCH -d '{
 # a 200 should be returned, showing the new state of the board
 #
 # expected response body:
-# {"activeThreads":[{"id":"t3","name":"the amazing thread","knots":[]},{"id":"t1","name":"the pepe thread","knots":[{"id":"k2","body":"the edit is real"},{"id":"k3","body":"the last knot"}]}],"hiddenThreads":["t2"],"lastProcessedCommandID":"c10"}
+# {"activeThreads":[{"id":"t3","name":"the amazing thread","knots":[]},{"id":"t1","name":"the pepe thread EDIT","knots":[{"id":"k2","body":"the edit is real"},{"id":"k3","body":"the last knot"}]}],"hiddenThreads":["t2"],"lastProcessedCommandID":"c11"}
 curl http://localhost:8000/ -b cookies
 
 # get thread
